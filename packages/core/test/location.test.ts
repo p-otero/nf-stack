@@ -66,8 +66,19 @@ const ENV_CONFIG: ResolvedProjectConfig = {
   uiReview: null,
 };
 
+const GIT_IDENTITY = {
+  GIT_AUTHOR_NAME: "Test",
+  GIT_AUTHOR_EMAIL: "test@example.test",
+  GIT_COMMITTER_NAME: "Test",
+  GIT_COMMITTER_EMAIL: "test@example.test",
+};
+
 function git(cwd: string, args: string[]): string {
-  const r = spawnSync("git", args, { cwd, encoding: "utf8" });
+  const r = spawnSync("git", args, {
+    cwd,
+    encoding: "utf8",
+    env: { ...process.env, ...GIT_IDENTITY },
+  });
   if (r.status !== 0) throw new Error(`git ${args.join(" ")} failed: ${r.stderr}`);
   return r.stdout.trim();
 }
@@ -75,16 +86,7 @@ function git(cwd: string, args: string[]): string {
 function commit(repo: string, name: string, text: string, message: string): string {
   writeFileSync(join(repo, name), text);
   git(repo, ["add", name]);
-  git(repo, [
-    "-c",
-    "user.name=nf",
-    "-c",
-    "user.email=nf@example.test",
-    "commit",
-    "-q",
-    "-m",
-    message,
-  ]);
+  git(repo, ["commit", "-q", "-m", message]);
   return git(repo, ["rev-parse", "HEAD"]);
 }
 
@@ -111,18 +113,7 @@ function featureBranch(root: string): Code {
 
 function merge(root: string, from: string, into: string): void {
   git(root, ["checkout", "-q", into]);
-  git(root, [
-    "-c",
-    "user.name=nf",
-    "-c",
-    "user.email=nf@example.test",
-    "merge",
-    "-q",
-    "--no-ff",
-    "-m",
-    `merge ${from} into ${into}`,
-    from,
-  ]);
+  git(root, ["merge", "-q", "--no-ff", "-m", `merge ${from} into ${into}`, from]);
 }
 
 function context(

@@ -34,8 +34,19 @@ function tmp(prefix: string): string {
   return dir;
 }
 
+const GIT_IDENTITY = {
+  GIT_AUTHOR_NAME: "Test",
+  GIT_AUTHOR_EMAIL: "test@example.test",
+  GIT_COMMITTER_NAME: "Test",
+  GIT_COMMITTER_EMAIL: "test@example.test",
+};
+
 function git(cwd: string, args: string[]): string {
-  const r = spawnSync("git", args, { cwd, encoding: "utf8" });
+  const r = spawnSync("git", args, {
+    cwd,
+    encoding: "utf8",
+    env: { ...process.env, ...GIT_IDENTITY },
+  });
   if (r.status !== 0) throw new Error(`git ${args.join(" ")} failed: ${r.stderr}`);
   return r.stdout.trim();
 }
@@ -43,16 +54,7 @@ function git(cwd: string, args: string[]): string {
 function commit(cwd: string, name: string, text: string): string {
   writeFileSync(join(cwd, name), text);
   git(cwd, ["add", name]);
-  git(cwd, [
-    "-c",
-    "user.name=nf",
-    "-c",
-    "user.email=nf@example.test",
-    "commit",
-    "-q",
-    "-m",
-    `add ${name}`,
-  ]);
+  git(cwd, ["commit", "-q", "-m", `add ${name}`]);
   return git(cwd, ["rev-parse", "HEAD"]);
 }
 

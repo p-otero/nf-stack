@@ -33,6 +33,8 @@ function tmp(prefix: string): string {
 function repo(name: string): string {
   const dir = tmp(`nf-t3-${name}-`);
   execFileSync("git", ["init", "-q"], { cwd: dir });
+  execFileSync("git", ["config", "user.name", "Test"], { cwd: dir });
+  execFileSync("git", ["config", "user.email", "test@example.test"], { cwd: dir });
   execFileSync("git", ["remote", "add", "origin", `https://example.test/${name}.git`], {
     cwd: dir,
   });

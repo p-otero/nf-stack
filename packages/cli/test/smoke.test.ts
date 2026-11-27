@@ -47,6 +47,8 @@ function tmp(prefix: string, into: string[] = dirs): string {
 function repo(into: string[] = dirs): string {
   const dir = tmp("nf-smoke-repo-", into);
   execFileSync("git", ["init", "-q"], { cwd: dir });
+  execFileSync("git", ["config", "user.name", "Test"], { cwd: dir });
+  execFileSync("git", ["config", "user.email", "test@example.test"], { cwd: dir });
   execFileSync("git", ["remote", "add", "origin", "https://example.test/smoke.git"], { cwd: dir });
   return dir;
 }
@@ -166,21 +168,7 @@ describe("nf CLI under node", () => {
   test("a linked git worktree finds the project of its primary checkout", () => {
     const home = tmp("nf-home-");
     const cwd = repo();
-    execFileSync(
-      "git",
-      [
-        "-c",
-        "user.name=t",
-        "-c",
-        "user.email=t@example.test",
-        "commit",
-        "-q",
-        "--allow-empty",
-        "-m",
-        "i",
-      ],
-      { cwd },
-    );
+    execFileSync("git", ["commit", "-q", "--allow-empty", "-m", "i"], { cwd });
     const wt = join(tmp("nf-wt-"), "wt");
     execFileSync("git", ["worktree", "add", "-q", wt, "-b", "side"], { cwd });
     expect(runner(home, cwd)(["init", "--prefix", "T"]).code).toBe(0);
