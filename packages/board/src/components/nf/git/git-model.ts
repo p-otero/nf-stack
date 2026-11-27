@@ -1,4 +1,11 @@
-import type { GitBranch, GitCommit, GitFileChange, GitRepo, GitWorktree } from "@nf/contracts";
+import type {
+  GitBranch,
+  GitCommit,
+  GitFileChange,
+  GitRepo,
+  GitWorktree,
+  GitWorktreeEntry,
+} from "@nf/contracts";
 import type { Writable } from "@/contract";
 import type { Commit } from "@/lib/commit-graph";
 import type { GitTreeFile } from "@/lib/git-status";
@@ -10,6 +17,8 @@ export type GitTabLocation = {
   repo: string | null;
   branch: string | null;
   commit: string | null;
+  /** A worktree of the repository to read; null is the repository's own checkout. */
+  worktree: string | null;
 };
 
 export type BoardViewId = "tasks" | "telemetry" | "git";
@@ -25,6 +34,7 @@ export const parseGitTabLocation = (search: string): GitTabLocation => {
     repo: param(params, "repo"),
     branch: param(params, "branch"),
     commit: param(params, "commit"),
+    worktree: param(params, "worktree"),
   };
 };
 
@@ -38,12 +48,18 @@ const setParam = (url: URL, name: string, value: string | null): void => {
   else url.searchParams.set(name, value);
 };
 
-export const NO_GIT_LOCATION: GitTabLocation = { repo: null, branch: null, commit: null };
+export const NO_GIT_LOCATION: GitTabLocation = {
+  repo: null,
+  branch: null,
+  commit: null,
+  worktree: null,
+};
 
 const setGitParams = (url: URL, git: GitTabLocation): void => {
   setParam(url, "repo", git.repo);
   setParam(url, "branch", git.branch);
   setParam(url, "commit", git.commit);
+  setParam(url, "worktree", git.worktree);
 };
 
 export const boardViewHref = (href: string, view: BoardViewId, git: GitTabLocation): string => {
@@ -128,14 +144,36 @@ const pathsOf = (files: readonly Writable<GitFileChange>[]): string[] =>
 
 export const worktreeCounts = (worktree: Writable<GitWorktree>): WorktreeCounts => {
   const staged = new Set(pathsOf(worktree.staged.files));
-  const unstaged = new Set([...pathsOf(worktree.unstaged.files), ...worktree.untracked]);
+  const untracked = new Set(pathsOf(worktree.untracked.files));
+  const unstaged = new Set([...pathsOf(worktree.unstaged.files), ...untracked]);
   return {
     staged: staged.size,
     unstaged: unstaged.size,
-    untracked: new Set(worktree.untracked).size,
+    untracked: untracked.size,
     files: new Set([...staged, ...unstaged]).size,
   };
 };
+
+export const worktreeBranchLabel = (
+  worktree: Pick<Writable<GitWorktreeEntry>, "branch" | "head">,
+): string =>
+  worktree.branch ??
+  (worktree.head === null ? "Detached HEAD" : `Detached at ${worktree.head.slice(0, 7)}`);
+
+/** The last two folders of a worktree's path, for a header that cannot hold the whole one. */
+export const shortWorktreePath = (path: string): string => {
+  const parts = path.split("/").filter((part) => part.length > 0);
+  const tail = parts.slice(-2).join("/");
+  return parts.length > 2 ? `…/${tail}` : tail;
+};
+
+/** The worktree the URL names, or the repository's own: one that no longer exists falls back. */
+export const worktreeOf = (
+  worktrees: readonly Writable<GitWorktreeEntry>[],
+  requested: string | null,
+): Writable<GitWorktreeEntry> | undefined =>
+  worktrees.find((entry) => entry.path === requested && !entry.prunable) ??
+  worktrees.find((entry) => entry.main);
 
 const TREE_STATUS: Partial<Record<Writable<GitFileChange>["status"], GitTreeFile["status"]>> = {
   added: "added",

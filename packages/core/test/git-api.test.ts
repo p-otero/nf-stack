@@ -6,6 +6,7 @@ import {
   readFileSync,
   readdirSync,
   realpathSync,
+  rmSync,
   statSync,
   utimesSync,
   writeFileSync,
@@ -19,6 +20,7 @@ import {
   gitCompare,
   gitLog,
   gitRepos,
+  gitWorktrees,
   gitWorktree,
   taskBranch,
   workspaceRootOf,
@@ -64,6 +66,8 @@ function commit(repo: string, files: Record<string, string>, message: string): s
   git(repo, ["commit", "-q", "-m", message]);
   return git(repo, ["rev-parse", "HEAD"]);
 }
+
+const slash = (path: string): string => path.split("\\").join("/");
 
 function t3State(dir: string, workspaceRoot: string): string {
   const file = join(dir, "statev2.sqlite");
@@ -163,15 +167,17 @@ describe("git API", () => {
   test("rejects a repository outside the workspace root", async () => {
     const ws = await workspace();
     for (const repo of ["..", ws.outsider, "../outsider"]) {
-      const error = await rejection(ws.opened.run(gitLog(ws.context, "WS", repo, LOG)));
+      const error = await rejection(ws.opened.run(gitLog(ws.context, "WS", repo, null, LOG)));
       expect(error).toMatchObject({ code: "repo_outside_workspace" });
     }
-    const missing = await rejection(ws.opened.run(gitLog(ws.context, "WS", "nope", LOG)));
+    const missing = await rejection(ws.opened.run(gitLog(ws.context, "WS", "nope", null, LOG)));
     expect(missing).toMatchObject({ code: "not_found" });
-    const notTop = await rejection(ws.opened.run(gitLog(ws.context, "WS", "api repo/src", LOG)));
+    const notTop = await rejection(
+      ws.opened.run(gitLog(ws.context, "WS", "api repo/src", null, LOG)),
+    );
     expect(notTop).toMatchObject({ code: "not_found" });
     const option = await rejection(
-      ws.opened.run(gitLog(ws.context, "WS", "api repo", { ...LOG, branch: "--output=x" })),
+      ws.opened.run(gitLog(ws.context, "WS", "api repo", null, { ...LOG, branch: "--output=x" })),
     );
     expect(option).toMatchObject({ code: "invalid_value" });
   });
@@ -181,10 +187,12 @@ describe("git API", () => {
     const leak = join(ws.root, "leak");
     write(join(leak, ".git"), "gitdir: ../../outsider/.git\n");
     expect(git(leak, ["log", "-1", "--format=%s"])).toBe("Outside");
-    const error = await rejection(ws.opened.run(gitLog(ws.context, "WS", "leak", LOG)));
+    const error = await rejection(ws.opened.run(gitLog(ws.context, "WS", "leak", null, LOG)));
     expect(error).toMatchObject({ code: "repo_outside_workspace" });
     const worktree = await rejection(
-      ws.opened.run(gitWorktree(ws.context, { project: "WS", repo: "leak", task: null })),
+      ws.opened.run(
+        gitWorktree(ws.context, { project: "WS", repo: "leak", task: null, worktree: null }),
+      ),
     );
     expect(worktree).toMatchObject({ code: "repo_outside_workspace" });
     const repos = await ws.opened.run(gitRepos(ws.context, "WS"));
@@ -217,7 +225,7 @@ describe("git API", () => {
     await ws.opened.store.updateAttempt(project.id, attempt.key, { branch: "--output=victim" });
     const before = snapshot(dirname(ws.root));
 
-    const branches = await ws.opened.run(gitBranches(ws.context, "WS", "api repo"));
+    const branches = await ws.opened.run(gitBranches(ws.context, "WS", "api repo", null));
     for (const name of ["--output=victim", "-n"]) {
       expect(branches.find((branch) => branch.name === name)).toMatchObject({
         head: tip,
@@ -228,10 +236,12 @@ describe("git API", () => {
       });
     }
     const viaRef = await ws.opened.run(
-      gitLog(ws.context, "WS", "api repo", { ...LOG, branch: "refs/heads/--output=victim" }),
+      gitLog(ws.context, "WS", "api repo", null, { ...LOG, branch: "refs/heads/--output=victim" }),
     );
     expect(viaRef.commits[0]?.sha).toBe(tip);
-    const all = await ws.opened.run(gitLog(ws.context, "WS", "api repo", { ...LOG, all: true }));
+    const all = await ws.opened.run(
+      gitLog(ws.context, "WS", "api repo", null, { ...LOG, all: true }),
+    );
     expect(all.commits.map((entry) => entry.sha)).toContain(tip);
     const compared = await ws.opened.run(
       gitCompare(ws.context, "WS", "api repo", "main", "refs/heads/-n"),
@@ -251,7 +261,9 @@ describe("git API", () => {
     const checkedOut = snapshot(dirname(ws.root));
     const repos = await ws.opened.run(gitRepos(ws.context, "WS"));
     expect(repos[0]).toMatchObject({ branch: "--output=victim", head: tip, commits: 2 });
-    await ws.opened.run(gitWorktree(ws.context, { project: "WS", repo: "api repo", task: null }));
+    await ws.opened.run(
+      gitWorktree(ws.context, { project: "WS", repo: "api repo", task: null, worktree: null }),
+    );
     expect(snapshot(dirname(ws.root))).toEqual(checkedOut);
     expect(readFileSync(join(ws.api, "victim...main"), "utf8")).toBe("keep\n");
   });
@@ -260,7 +272,7 @@ describe("git API", () => {
     const ws = await workspace();
     for (const query of [{ limit: "1e2" }, { limit: "0x2" }, { limit: "2.0" }, { cursor: "1e1" }]) {
       const error = await rejection(
-        ws.opened.run(gitLog(ws.context, "WS", "api repo", { ...LOG, ...query })),
+        ws.opened.run(gitLog(ws.context, "WS", "api repo", null, { ...LOG, ...query })),
       );
       expect(error).toMatchObject({ code: "invalid_value" });
     }
@@ -272,7 +284,7 @@ describe("git API", () => {
     commit(ws.api, { "a.txt": "a\n" }, "Local one");
     commit(ws.api, { "b.txt": "b\n" }, "Local two");
     git(ws.api, ["switch", "-q", "main"]);
-    const branches = await ws.opened.run(gitBranches(ws.context, "WS", "api repo"));
+    const branches = await ws.opened.run(gitBranches(ws.context, "WS", "api repo", null));
     const local = branches.find((branch) => branch.name === "local-only");
     const main = branches.find((branch) => branch.name === "main");
     expect(local).toMatchObject({
@@ -284,7 +296,7 @@ describe("git API", () => {
     });
     expect(local?.current).toBe(false);
     expect(main).toMatchObject({ upstream: "origin/main", unpushed: 0, ahead: 0, current: true });
-    const cliBranches = await ws.opened.run(gitBranches(ws.context, "WS", "tools/cli"));
+    const cliBranches = await ws.opened.run(gitBranches(ws.context, "WS", "tools/cli", null));
     expect(cliBranches).toEqual([
       expect.objectContaining({
         name: "main",
@@ -303,7 +315,9 @@ describe("git API", () => {
     git(ws.api, ["switch", "-q", "-c", "side"]);
     commit(ws.api, { "e.txt": "e\n" }, "Side");
     git(ws.api, ["switch", "-q", "main"]);
-    const first = await ws.opened.run(gitLog(ws.context, "WS", "api repo", { ...LOG, limit: "2" }));
+    const first = await ws.opened.run(
+      gitLog(ws.context, "WS", "api repo", null, { ...LOG, limit: "2" }),
+    );
     expect(first.commits.map((entry) => entry.subject)).toEqual(["Third", "Second"]);
     expect(first.total).toBe(3);
     expect(first.next).toBe("2");
@@ -314,15 +328,17 @@ describe("git API", () => {
       author: "Test",
     });
     const second = await ws.opened.run(
-      gitLog(ws.context, "WS", "api repo", { ...LOG, limit: "2", cursor: first.next }),
+      gitLog(ws.context, "WS", "api repo", null, { ...LOG, limit: "2", cursor: first.next }),
     );
     expect(second.commits.map((entry) => entry.subject)).toEqual(["Initial commit"]);
     expect(second.next).toBeNull();
-    const all = await ws.opened.run(gitLog(ws.context, "WS", "api repo", { ...LOG, all: true }));
+    const all = await ws.opened.run(
+      gitLog(ws.context, "WS", "api repo", null, { ...LOG, all: true }),
+    );
     expect(all.commits.map((entry) => entry.subject)).toContain("Side");
     expect(all.total).toBe(4);
     const side = await ws.opened.run(
-      gitLog(ws.context, "WS", "api repo", { ...LOG, branch: "side" }),
+      gitLog(ws.context, "WS", "api repo", null, { ...LOG, branch: "side" }),
     );
     expect(side.commits[0]?.subject).toBe("Side");
   });
@@ -377,14 +393,16 @@ describe("git API", () => {
     git(ws.api, ["add", "README.md"]);
     write(join(ws.api, "README.md"), "# api\n\nstaged\nand unstaged\n");
     write(join(ws.api, "src", "app.ts"), "export const a = 3;\n");
-    write(join(ws.api, "new file.txt"), "new\n");
+    write(join(ws.api, "new file.txt"), "new\nsecond\n");
+    writeFileSync(join(ws.api, "empty.txt"), "");
+    writeFileSync(join(ws.api, "logo.png"), Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x00, 0x01]));
     const past = new Date(Date.now() - 60_000);
     utimesSync(join(ws.api, "src", "app.ts"), past, past);
     const index = join(ws.api, ".git", "index");
     const before = { bytes: readFileSync(index), mtime: statSync(index).mtimeMs };
 
     const changes = await ws.opened.run(
-      gitWorktree(ws.context, { project: "WS", repo: "api repo", task: null }),
+      gitWorktree(ws.context, { project: "WS", repo: "api repo", task: null, worktree: null }),
     );
     expect(changes.branch).toBe("main");
     expect(changes.staged.files).toEqual([
@@ -393,12 +411,132 @@ describe("git API", () => {
     expect(changes.unstaged.files.map((file) => file.path)).toEqual(["README.md", "src/app.ts"]);
     expect(changes.unstaged.patch).toContain("+and unstaged");
     expect(changes.staged.patch).not.toContain("and unstaged");
-    expect(changes.untracked).toEqual(["new file.txt"]);
+    expect(changes.untracked.files).toEqual([
+      { path: "empty.txt", status: "added", from: null, additions: 0, deletions: 0 },
+      { path: "logo.png", status: "added", from: null, additions: null, deletions: null },
+      { path: "new file.txt", status: "added", from: null, additions: 2, deletions: 0 },
+    ]);
+    expect(changes.untracked.patch).toContain("new file mode 100644");
+    expect(changes.untracked.patch).toContain("+second");
+    expect(changes.untracked.patch).toContain("Binary files /dev/null and b/logo.png differ");
+    expect(changes.untracked.patch).toContain("diff --git a/empty.txt b/empty.txt");
+    expect(changes.untracked.patch).toContain("+++ b/new file.txt");
+    expect(changes.untracked.truncated).toBe(false);
     await ws.opened.run(gitRepos(ws.context, "WS"));
 
     expect(readFileSync(index).equals(before.bytes)).toBe(true);
     expect(statSync(index).mtimeMs).toBe(before.mtime);
     expect(existsSync(join(ws.api, ".git", "index.lock"))).toBe(false);
+  });
+
+  test("lists a repository's worktrees, the primary one first, with its state", async () => {
+    const ws = await workspace();
+    const base = dirname(ws.root);
+    const linked = join(base, "linked worktree");
+    const detached = join(base, "detached worktree");
+    git(ws.api, ["worktree", "add", "-q", "-b", "feat/linked", linked]);
+    git(ws.api, ["worktree", "add", "-q", "--detach", detached]);
+    git(ws.api, ["worktree", "lock", detached]);
+    const head = git(ws.api, ["rev-parse", "HEAD"]);
+    const listed = await ws.opened.run(gitWorktrees(ws.context, "WS", "api repo"));
+    const byPath = new Map(listed.map((entry) => [entry.path, entry]));
+    expect([...byPath.keys()]).toEqual([slash(ws.api), slash(detached), slash(linked)]);
+    expect(byPath.get(slash(ws.api))).toMatchObject({
+      branch: "main",
+      head,
+      main: true,
+      locked: false,
+      prunable: false,
+    });
+    expect(byPath.get(slash(linked))).toMatchObject({
+      branch: "feat/linked",
+      head,
+      main: false,
+      locked: false,
+      prunable: false,
+    });
+    expect(byPath.get(slash(detached))).toMatchObject({
+      branch: null,
+      head,
+      main: false,
+      locked: true,
+      prunable: false,
+    });
+
+    rmSync(linked, { recursive: true });
+    const pruned = await ws.opened.run(gitWorktrees(ws.context, "WS", "api repo"));
+    expect(pruned.find((entry) => entry.path === slash(linked))).toMatchObject({
+      prunable: true,
+      main: false,
+    });
+  });
+
+  test("reads the branches, history and changes of a chosen worktree", async () => {
+    const ws = await workspace();
+    const linked = join(dirname(ws.root), "linked worktree");
+    git(ws.api, ["worktree", "add", "-q", "-b", "feat/linked", linked]);
+    const head = commit(linked, { "linked.txt": "l\n" }, "Linked commit");
+    write(join(linked, "scratch.txt"), "s\n");
+    write(join(ws.api, "main-only.txt"), "m\n");
+    const path = linked.split("\\").join("/");
+
+    const log = await ws.opened.run(gitLog(ws.context, "WS", "api repo", path, LOG));
+    expect(log.commits.map((entry) => entry.subject)).toEqual(["Linked commit", "Initial commit"]);
+    const branches = await ws.opened.run(gitBranches(ws.context, "WS", "api repo", path));
+    expect(branches.filter((branch) => branch.current).map((branch) => branch.name)).toEqual([
+      "feat/linked",
+    ]);
+    const changes = await ws.opened.run(
+      gitWorktree(ws.context, {
+        project: "WS",
+        repo: "api repo",
+        task: null,
+        worktree: path,
+      }),
+    );
+    expect(changes).toMatchObject({ repo: "api repo", path, branch: "feat/linked", head });
+    expect(changes.staged.files).toEqual([]);
+    expect(changes.unstaged.files).toEqual([]);
+    expect(changes.untracked.files.map((file) => file.path)).toEqual(["scratch.txt"]);
+
+    const main = await ws.opened.run(
+      gitWorktree(ws.context, { project: "WS", repo: "api repo", task: null, worktree: null }),
+    );
+    expect(main).toMatchObject({ branch: "main", path: ws.api.split("\\").join("/") });
+    expect(main.untracked.files.map((file) => file.path)).toEqual(["main-only.txt"]);
+  });
+
+  test("refuses a path that is not one of the repository's worktrees", async () => {
+    const ws = await workspace();
+    const linked = join(dirname(ws.root), "linked worktree");
+    git(ws.api, ["worktree", "add", "-q", "-b", "feat/linked", linked]);
+    const refused = [
+      ws.outsider,
+      "../outsider",
+      join(dirname(ws.root), "elsewhere"),
+      join(ws.api, "src"),
+    ];
+    for (const worktree of refused) {
+      const branches = await rejection(
+        ws.opened.run(gitBranches(ws.context, "WS", "api repo", worktree)),
+      );
+      const log = await rejection(
+        ws.opened.run(gitLog(ws.context, "WS", "api repo", worktree, LOG)),
+      );
+      const changes = await rejection(
+        ws.opened.run(
+          gitWorktree(ws.context, { project: "WS", repo: "api repo", task: null, worktree }),
+        ),
+      );
+      for (const error of [branches, log, changes])
+        expect(error).toMatchObject({ code: "invalid_value" });
+    }
+    const linkedBranches = await ws.opened.run(
+      gitBranches(ws.context, "WS", "api repo", linked.split("\\").join("/")),
+    );
+    expect(linkedBranches.filter((branch) => branch.current).map((branch) => branch.name)).toEqual([
+      "feat/linked",
+    ]);
   });
 
   test("caps a patch at the file limit and at the byte limit", async () => {
@@ -477,11 +615,11 @@ describe("git API", () => {
     ]);
 
     const changes = await ws.opened.run(
-      gitWorktree(ws.context, { project: null, repo: null, task: task.key }),
+      gitWorktree(ws.context, { project: null, repo: null, task: task.key, worktree: null }),
     );
     expect(changes.repo).toBe("api repo");
     expect(changes.branch).toBe("feat/task");
-    expect(changes.untracked).toEqual(["dirty.txt"]);
+    expect(changes.untracked.files.map((file) => file.path)).toEqual(["dirty.txt"]);
 
     git(tree, ["switch", "-q", "-c", "feat/local"]);
     const local = commit(tree, { "three.txt": "3\n" }, "Local three");

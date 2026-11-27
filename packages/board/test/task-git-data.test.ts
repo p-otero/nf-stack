@@ -149,7 +149,13 @@ describe("task git data", () => {
       patch: "diff --git a/src/dispatch.ts b/src/dispatch.ts",
       truncated: false,
     },
-    untracked: ["test/dispatch.test.ts"],
+    untracked: {
+      files: [
+        { path: "test/dispatch.test.ts", status: "added", from: null, additions: 2, deletions: 0 },
+      ],
+      patch: "diff --git a/test/dispatch.test.ts b/test/dispatch.test.ts",
+      truncated: false,
+    },
     untrackedTruncated: false,
   };
 

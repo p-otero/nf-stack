@@ -8,6 +8,7 @@ import {
   gitCompare,
   gitLog,
   gitRepos,
+  gitWorktrees,
   gitWorktree,
   isNfError,
   t3StatePath,
@@ -69,11 +70,22 @@ const gitRead = (
   switch (path.slice(GIT_API.length)) {
     case "repos":
       return cli.withStore(gitRepos(api, required(params, "project")));
+    case "worktrees":
+      return cli.withStore(
+        gitWorktrees(api, required(params, "project"), required(params, "repo")),
+      );
     case "branches":
-      return cli.withStore(gitBranches(api, required(params, "project"), required(params, "repo")));
+      return cli.withStore(
+        gitBranches(
+          api,
+          required(params, "project"),
+          required(params, "repo"),
+          params.get("worktree"),
+        ),
+      );
     case "log":
       return cli.withStore(
-        gitLog(api, required(params, "project"), required(params, "repo"), {
+        gitLog(api, required(params, "project"), required(params, "repo"), params.get("worktree"), {
           branch: params.get("branch"),
           all: flag(params, "all"),
           cursor: params.get("cursor"),
@@ -105,6 +117,7 @@ const gitRead = (
           project: params.get("project"),
           repo: params.get("repo"),
           task: params.get("task"),
+          worktree: params.get("worktree"),
         }),
       );
     default:

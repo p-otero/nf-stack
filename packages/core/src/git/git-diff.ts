@@ -13,7 +13,7 @@ const STATUS_LETTER: Record<string, GitFileStatus> = {
   U: GIT_FILE_STATUS.UNMERGED,
 };
 
-const DIFF_FLAGS = [
+export const DIFF_FLAGS = [
   "--no-color",
   "--no-ext-diff",
   "--no-textconv",

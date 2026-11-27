@@ -348,16 +348,21 @@ answer 409. The page posts with that token and refetches the board with TanStack
 snapshot embeds the same `boardData` payload as `initialData` and never refetches.
 
 `serve-git.ts` adds the read-only git API for the board's Git tab and task dialog, all `GET`:
-`/api/git/repos?project=`, `/api/git/branches`, `/api/git/log` (`branch`, `all`, `cursor`, `limit`),
-`/api/git/commit?sha=`, `/api/git/compare?base=&head=`, `/api/git/worktree` (or `?task=<KEY>`) and
-`/api/tasks/<KEY>/branch`; every git route but the last takes `project` and `repo`. The workspace is
-the T3 project (`projection_projects.workspace_root` in `statev2.sqlite`) rooted at the NF project's
-checkout or the closest one containing it, else the checkout itself; `repos` scans it four levels deep
-for nested repositories (skipping dot folders, `node_modules`, `dist` and the like), and `repo` is a
-path relative to it that must stay inside it after resolving links and be a checkout's top level
-(`403 repo_outside_workspace` otherwise), and so must its git common dir, so a `.git` file cannot
-point a folder at another repository. A task's worktree may live elsewhere when its repository is
-inside. A branch can be named like an option (`refs/heads/--output=x`), so a ref name reaches git
+`/api/git/repos?project=`, `/api/git/worktrees`, `/api/git/branches`, `/api/git/log` (`branch`,
+`all`, `cursor`, `limit`), `/api/git/commit?sha=`, `/api/git/compare?base=&head=`,
+`/api/git/worktree` (or `?task=<KEY>`) and `/api/tasks/<KEY>/branch`; every git route but the last
+takes `project` and `repo`. The workspace is the T3 project
+(`projection_projects.workspace_root` in `statev2.sqlite`) rooted at the NF project's checkout or the
+closest one containing it, else the checkout itself; `repos` scans it four levels deep for nested
+repositories (skipping dot folders, `node_modules`, `dist` and the like), and `repo` is a path
+relative to it that must stay inside it after resolving links and be a checkout's top level (`403
+repo_outside_workspace` otherwise), and so must its git common dir, so a `.git` file cannot point a
+folder at another repository. A task's worktree may live elsewhere when its repository is inside.
+`worktrees` lists every checkout `git worktree list --porcelain` reports for the repository (its path,
+branch or detached HEAD, whether it is the primary one and whether it is locked or prunable), and
+`branches`, `log` and `worktree` take an optional `worktree` path that must be one of those, so a
+linked worktree outside the workspace can be read and no other path can. A branch can be named like
+an option (`refs/heads/--output=x`), so a ref name reaches git
 only in `rev-parse --verify --end-of-options`; every other command gets the resolved sha.
 `packages/core/src/git` runs git with `--no-optional-locks`, `GIT_OPTIONAL_LOCKS=0`, no
 fsmonitor, external diff or textconv, never fetches, and validates each response with the Schemas

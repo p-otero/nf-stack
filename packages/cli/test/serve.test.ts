@@ -659,9 +659,12 @@ describe("nf serve", () => {
     expect(shown.body).toMatchObject({ parent: null, tree: ["README.md"], truncated: false });
     expect((await get("/api/git/branches?project=GA&repo=.")).status).toBe(200);
     expect((await get("/api/git/worktree?project=GA&repo=.")).body).toMatchObject({
-      untracked: [],
+      untracked: { files: [], patch: "", truncated: false },
       staged: { files: [], patch: "" },
     });
+    expect((await get("/api/git/worktrees?project=GA&repo=.")).body).toEqual([
+      expect.objectContaining({ branch: "main", main: true, locked: false, prunable: false }),
+    ]);
     expect(
       (await get("/api/git/compare?project=GA&repo=.&base=HEAD&head=main")).body,
     ).toMatchObject({ ahead: 0, behind: 0, commits: [] });
@@ -676,6 +679,9 @@ describe("nf serve", () => {
     expect((await get("/api/tasks/GA-999/branch")).status).toBe(404);
     expect((await get("/api/git/unknown?project=GA")).status).toBe(404);
     expect((await get("/api/git/log?project=GA&repo=.&limit=1e2")).status).toBe(400);
+    expect((await get("/api/git/worktree?project=GA&repo=.&worktree=..")).body).toMatchObject({
+      code: "invalid_value",
+    });
   });
 
   test("git API: option-like branch names write nothing and a .git pointer cannot leave the workspace", async () => {

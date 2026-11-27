@@ -138,6 +138,7 @@ describe("branch history", () => {
       repo: "services/api",
       branch: "feat/webhook-backoff",
       commit: null,
+      worktree: null,
     });
     expect(window.location.search).toContain("branch=feat%2Fwebhook-backoff");
   });
