@@ -1,0 +1,60 @@
+{
+  "data": [
+    {
+      "id": "deepseek/deepseek-v4.1-flash",
+      "name": "DeepSeek: DeepSeek V4.1 Flash",
+      "pricing": {
+        "prompt": "0.00000014",
+        "completion": "0.00000042"
+      }
+    },
+    {
+      "id": "deepseek/deepseek-v4.1-flash:batch",
+      "name": "DeepSeek: DeepSeek V4.1 Flash (batch)",
+      "pricing": {
+        "prompt": "0.000000112",
+        "completion": "0.000000336"
+      }
+    },
+    {
+      "id": "z-ai/glm-5.3-flash",
+      "name": "Z.ai: GLM 5.3 Flash",
+      "pricing": {
+        "prompt": "0.0000000399",
+        "completion": "0.0000000784"
+      }
+    },
+    {
+      "id": "z-ai/glm-5.3",
+      "name": "Z.ai: GLM 5.3",
+      "pricing": {
+        "prompt": "0.0000000699",
+        "completion": "0.0000014"
+      }
+    },
+    {
+      "id": "anthropic/claude-fable-5.2",
+      "name": "Anthropic: Claude Fable 5.2",
+      "pricing": {
+        "prompt": "0.000008",
+        "completion": "0.00004"
+      }
+    },
+    {
+      "id": "openai/gpt-6-astra",
+      "name": "OpenAI: GPT-6 Astra",
+      "pricing": {
+        "prompt": "0.00001",
+        "completion": "0.00005"
+      }
+    },
+    {
+      "id": "openai/gpt-6.1-sol",
+      "name": "OpenAI: GPT-6.1 Sol",
+      "pricing": {
+        "prompt": "0.000002",
+        "completion": "0.00001"
+      }
+    }
+  ]
+}

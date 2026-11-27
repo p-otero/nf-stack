@@ -1,0 +1,158 @@
+[
+  {
+    "args": ["status", "--project", "demo"],
+    "code": 0,
+    "out": "demo  C:/fixture/demo\ntasks 5: proposed 1, todo 1, working 1, review 1, done 1\nlive attempts:\n  DE-002-A2  active implementation thread=thread-w2 liveness=unknown\nready: none\nawaiting approval:\n  DE-005  Proposed follow-up\n",
+    "err": ""
+  },
+  {
+    "args": ["status", "--project", "demo", "--json"],
+    "code": 0,
+    "out": "{\"project\":{\"id\":\"01M7GMKFD22KAG73101C0JS7W7\",\"machine_id\":\"01M7GMKFCRWX4PWKKB09V9N1G8\",\"name\":\"demo\",\"prefix\":\"DE\",\"root_path\":\"C:/fixture/demo\",\"remote_url\":\"https://example.test/demo.git\",\"coordinator_environment_id\":null,\"coordinator_thread_id\":\"thread-coord\",\"coordinator_thread_link\":\"t3://thread/thread-coordinator-1\",\"created_at\":\"2026-11-15T22:17:48.706Z\"},\"counts\":{\"proposed\":1,\"todo\":1,\"working\":1,\"review\":1,\"blocked\":0,\"done\":1,\"cancelled\":0},\"total\":5,\"live_attempts\":[{\"key\":\"DE-002-A2\",\"task\":\"DE-002\",\"kind\":\"implementation\",\"status\":\"active\",\"thread_id\":\"thread-w2\",\"started_at\":\"2026-11-15T22:17:48.856Z\",\"liveness\":null,\"last_activity_at\":null}],\"ready\":[],\"proposals\":[{\"key\":\"DE-005\",\"title\":\"Proposed follow-up\"}]}\n",
+    "err": ""
+  },
+  {
+    "args": ["task", "list", "--project", "demo"],
+    "code": 0,
+    "out": "DE-001  done      Add login endpoint\nDE-002  working   Rate limit login  (after DE-001)\nDE-003  todo      Document login  (after DE-001, DE-002)\nDE-004  review    Usage attribution\nDE-005  proposed  Proposed follow-up  (after DE-004)\n",
+    "err": ""
+  },
+  {
+    "args": ["task", "list", "--project", "demo", "--json"],
+    "code": 0,
+    "out": "[{\"id\":\"01M7GMKFHPKN2MSJA68G41S5P8\",\"project_id\":\"01M7GMKFD22KAG73101C0JS7W7\",\"key\":\"DE-001\",\"title\":\"Add login endpoint\",\"goal\":\"Users can log in with a password\",\"status\":\"done\",\"profile\":null,\"analysis_mode\":null,\"strategy\":null,\"ui\":false,\"authorization\":\"Edit src/auth only. No push, no deploy.\",\"decision_needed\":null,\"blocker\":null,\"evidence\":\"bun test -> PASS; commit def5678\",\"accepted_first_pass\":null,\"human_interventions\":0,\"source\":null,\"design_ref\":null,\"superseded_by\":null,\"created_at\":\"2026-11-15T22:17:48.854Z\",\"updated_at\":\"2026-11-15T22:17:48.854Z\",\"acceptance\":[{\"position\":1,\"text\":\"POST /login returns 200 for valid credentials\",\"result\":\"pass\",\"evidence\":\"imported: task was done in the source file\"},{\"position\":2,\"text\":\"POST /login returns 401 for a bad password\",\"result\":\"pass\",\"evidence\":\"imported: task was done in the source file\"}],\"depends_on\":[]},{\"id\":\"01M7GMKFHRN1D4D3TGFC8PHPN5\",\"project_id\":\"01M7GMKFD22KAG73101C0JS7W7\",\"key\":\"DE-002\",\"title\":\"Rate limit login\",\"goal\":\"Repeated bad logins are throttled\",\"status\":\"working\",\"profile\":null,\"analysis_mode\":null,\"strategy\":null,\"ui\":false,\"authorization\":null,\"decision_needed\":null,\"blocker\":{\"identity\":\"quota\",\"no_progress_cycles\":0},\"evidence\":null,\"accepted_first_pass\":null,\"human_interventions\":0,\"source\":null,\"design_ref\":null,\"superseded_by\":null,\"created_at\":\"2026-11-15T22:17:48.856Z\",\"updated_at\":\"2026-11-15T22:17:48.856Z\",\"acceptance\":[{\"position\":1,\"text\":\"6th bad login within a minute returns 429\",\"result\":\"unverified\",\"evidence\":null}],\"depends_on\":[\"DE-001\"]},{\"id\":\"01M7GMKFHRN1D4D3TGFC8PHPN9\",\"project_id\":\"01M7GMKFD22KAG73101C0JS7W7\",\"key\":\"DE-003\",\"title\":\"Document login\",\"goal\":\"README explains the login flow\",\"status\":\"todo\",\"profile\":null,\"analysis_mode\":null,\"strategy\":null,\"ui\":false,\"authorization\":null,\"decision_needed\":null,\"blocker\":null,\"evidence\":null,\"accepted_first_pass\":null,\"human_interventions\":0,\"source\":null,\"design_ref\":\"docs/login.md\",\"superseded_by\":null,\"created_at\":\"2026-11-15T22:17:48.856Z\",\"updated_at\":\"2026-11-15T22:17:48.856Z\",\"acceptance\":[{\"position\":1,\"text\":\"README has a Login section\",\"result\":\"unverified\",\"evidence\":null}],\"depends_on\":[\"DE-001\",\"DE-002\"]},{\"id\":\"01M7GMKFPGFWVVB9GXJW1J3XKM\",\"project_id\":\"01M7GMKFD22KAG73101C0JS7W7\",\"key\":\"DE-004\",\"title\":\"Usage attribution\",\"goal\":\"attribute tokens\",\"status\":\"review\",\"profile\":\"bounded\",\"analysis_mode\":null,\"strategy\":null,\"ui\":false,\"authorization\":null,\"decision_needed\":null,\"blocker\":null,\"evidence\":null,\"accepted_first_pass\":null,\"human_interventions\":0,\"source\":null,\"design_ref\":null,\"superseded_by\":null,\"created_at\":\"2026-11-15T22:17:49.008Z\",\"updated_at\":\"2026-11-15T22:17:50.368Z\",\"acceptance\":[{\"position\":1,\"text\":\"works\",\"result\":\"pass\",\"evidence\":\"e\"},{\"position\":2,\"text\":\"is cheap\",\"result\":\"unverified\",\"evidence\":null}],\"depends_on\":[]},{\"id\":\"01M7GMKFV7HQM8AW0RRD6MC9N9\",\"project_id\":\"01M7GMKFD22KAG73101C0JS7W7\",\"key\":\"DE-005\",\"title\":\"Proposed follow-up\",\"goal\":\"later\",\"status\":\"proposed\",\"profile\":null,\"analysis_mode\":null,\"strategy\":null,\"ui\":false,\"authorization\":null,\"decision_needed\":null,\"blocker\":null,\"evidence\":null,\"accepted_first_pass\":null,\"human_interventions\":0,\"source\":null,\"design_ref\":null,\"superseded_by\":null,\"created_at\":\"2026-11-15T22:17:49.159Z\",\"updated_at\":\"2026-11-15T22:17:49.159Z\",\"acceptance\":[{\"position\":1,\"text\":\"x\",\"result\":\"unverified\",\"evidence\":null}],\"depends_on\":[\"DE-004\"]}]\n",
+    "err": ""
+  },
+  {
+    "args": ["task", "list", "--all-projects"],
+    "code": 0,
+    "out": "demo/DE-001  done      Add login endpoint\ndemo/DE-002  working   Rate limit login  (after DE-001)\ndemo/DE-003  todo      Document login  (after DE-001, DE-002)\ndemo/DE-004  review    Usage attribution\ndemo/DE-005  proposed  Proposed follow-up  (after DE-004)\n",
+    "err": ""
+  },
+  {
+    "args": ["task", "show", "T-001", "--project", "demo"],
+    "code": 0,
+    "out": "DE-001  done  Add login endpoint\ngoal: Users can log in with a password\nstrategy: —\nauthorization: Edit src/auth only. No push, no deploy.\nacceptance:\n  1. [pass] POST /login returns 200 for valid credentials  -- imported: task was done in the source file\n  2. [pass] POST /login returns 401 for a bad password  -- imported: task was done in the source file\nattempts:\n  DE-001-A1  succeeded   implementation model=gpt-x thread=thread-w1\nevidence: bun test -> PASS; commit def5678\n",
+    "err": ""
+  },
+  {
+    "args": ["task", "show", "T-002", "--project", "demo", "--json"],
+    "code": 0,
+    "out": "{\"id\":\"01M7GMKFHRN1D4D3TGFC8PHPN5\",\"project_id\":\"01M7GMKFD22KAG73101C0JS7W7\",\"key\":\"DE-002\",\"title\":\"Rate limit login\",\"goal\":\"Repeated bad logins are throttled\",\"status\":\"working\",\"profile\":null,\"analysis_mode\":null,\"strategy\":null,\"ui\":false,\"authorization\":null,\"decision_needed\":null,\"blocker\":{\"identity\":\"quota\",\"no_progress_cycles\":0},\"evidence\":null,\"accepted_first_pass\":null,\"human_interventions\":0,\"source\":null,\"design_ref\":null,\"superseded_by\":null,\"created_at\":\"2026-11-15T22:17:48.856Z\",\"updated_at\":\"2026-11-15T22:17:48.856Z\",\"acceptance\":[{\"position\":1,\"text\":\"6th bad login within a minute returns 429\",\"result\":\"unverified\",\"evidence\":null}],\"depends_on\":[\"DE-001\"],\"attempts\":[{\"id\":\"01M7GMKFHRN1D4D3TGFC8PHPN7\",\"task_id\":\"01M7GMKFHRN1D4D3TGFC8PHPN5\",\"task_key\":\"DE-002\",\"key\":\"DE-002-A1\",\"kind\":\"implementation\",\"status\":\"failed\",\"mechanism\":\"fork\",\"environment_id\":null,\"thread_id\":null,\"thread_link\":null,\"t3_task_id\":null,\"client_request_id\":null,\"provider_instance_id\":\"claude\",\"model\":\"sonnet\",\"options\":null,\"executed_model\":null,\"profile\":\"reasoning\",\"strategy\":null,\"coordinator_thread_id\":\"thread-coord\",\"coordinator_model\":\"claude-test\",\"reason\":\"needs conversation context\",\"fallbacks\":[],\"context_mode\":\"fresh\",\"source_thread_id\":null,\"repair_of\":null,\"started_at\":\"2026-11-15T22:17:48.856Z\",\"ended_at\":null,\"base_commit\":null,\"worktree\":null,\"branch\":null,\"commits\":[],\"diff_location\":null,\"outcome\":null,\"failure_class\":null,\"failure_detail\":\"quota exhausted until 18:00\",\"retry_at\":\"2026-11-15T18:00:00Z\",\"last_verified\":null,\"remaining\":null,\"checks\":[]},{\"id\":\"01M7GMKFHRN1D4D3TGFC8PHPN8\",\"task_id\":\"01M7GMKFHRN1D4D3TGFC8PHPN5\",\"task_key\":\"DE-002\",\"key\":\"DE-002-A2\",\"kind\":\"implementation\",\"status\":\"active\",\"mechanism\":\"delegate_task\",\"environment_id\":null,\"thread_id\":\"thread-w2\",\"thread_link\":null,\"t3_task_id\":null,\"client_request_id\":null,\"provider_instance_id\":\"codex\",\"model\":\"gpt-x\",\"options\":null,\"executed_model\":null,\"profile\":\"bounded\",\"strategy\":null,\"coordinator_thread_id\":\"thread-coord\",\"coordinator_model\":\"claude-test\",\"reason\":\"fallback after quota\",\"fallbacks\":[],\"context_mode\":\"fresh\",\"source_thread_id\":null,\"repair_of\":\"DE-002-A1\",\"started_at\":\"2026-11-15T22:17:48.856Z\",\"ended_at\":null,\"base_commit\":null,\"worktree\":null,\"branch\":null,\"commits\":[],\"diff_location\":null,\"outcome\":null,\"failure_class\":null,\"failure_detail\":null,\"retry_at\":null,\"last_verified\":null,\"remaining\":null,\"checks\":[]}]}\n",
+    "err": ""
+  },
+  {
+    "args": ["task", "show", "T-004", "--project", "demo", "--events"],
+    "code": 0,
+    "out": "DE-004  review  Usage attribution\ngoal: attribute tokens\nprofile: bounded  strategy: —\nacceptance:\n  1. [pass] works  -- e\n  2. [unverified] is cheap\nattempts:\n  DE-004-A1  succeeded   implementation model=claude-test thread=thread-a\nevents:\n  2026-11-15T22:17:49.009Z coordinator created -> todo\n  2026-11-15T22:17:49.316Z coordinator status todo -> working  dispatched\n  2026-11-15T22:17:49.469Z coordinator attempt_started  T-004-A1\n  2026-11-15T22:17:49.621Z coordinator attempt_updated  T-004-A1: status dispatching->active, thread_id, fallbacks, commit, check\n  2026-11-15T22:17:50.063Z coordinator attempt_finished active -> succeeded  T-004-A1\n  2026-11-15T22:17:50.213Z coordinator status working -> review\n  2026-11-15T22:17:50.369Z coordinator check  #1 pass: e\n",
+    "err": ""
+  },
+  {
+    "args": ["task", "show", "T-004", "--project", "demo", "--events", "--json"],
+    "code": 0,
+    "out": "{\"id\":\"01M7GMKFPGFWVVB9GXJW1J3XKM\",\"project_id\":\"01M7GMKFD22KAG73101C0JS7W7\",\"key\":\"DE-004\",\"title\":\"Usage attribution\",\"goal\":\"attribute tokens\",\"status\":\"review\",\"profile\":\"bounded\",\"analysis_mode\":null,\"strategy\":null,\"ui\":false,\"authorization\":null,\"decision_needed\":null,\"blocker\":null,\"evidence\":null,\"accepted_first_pass\":null,\"human_interventions\":0,\"source\":null,\"design_ref\":null,\"superseded_by\":null,\"created_at\":\"2026-11-15T22:17:49.008Z\",\"updated_at\":\"2026-11-15T22:17:50.368Z\",\"acceptance\":[{\"position\":1,\"text\":\"works\",\"result\":\"pass\",\"evidence\":\"e\"},{\"position\":2,\"text\":\"is cheap\",\"result\":\"unverified\",\"evidence\":null}],\"depends_on\":[],\"attempts\":[{\"id\":\"01M7GMKG4WCZ1G6J4ZX1FWGBB3\",\"task_id\":\"01M7GMKFPGFWVVB9GXJW1J3XKM\",\"task_key\":\"DE-004\",\"key\":\"DE-004-A1\",\"kind\":\"implementation\",\"status\":\"succeeded\",\"mechanism\":\"delegate_task\",\"environment_id\":null,\"thread_id\":\"thread-a\",\"thread_link\":null,\"t3_task_id\":null,\"client_request_id\":null,\"provider_instance_id\":\"claudeAgent\",\"model\":\"claude-test\",\"options\":{\"effort\":\"high\"},\"executed_model\":null,\"profile\":\"bounded\",\"strategy\":null,\"coordinator_thread_id\":\"thread-coord\",\"coordinator_model\":\"claude-test\",\"reason\":\"fixture\",\"fallbacks\":[{\"route\":\"x\",\"failure\":\"quota\"}],\"context_mode\":\"fresh\",\"source_thread_id\":null,\"repair_of\":null,\"started_at\":\"2026-11-15T22:17:49.468Z\",\"ended_at\":\"2026-11-15T22:17:50.062Z\",\"base_commit\":null,\"worktree\":null,\"branch\":null,\"commits\":[\"abc\"],\"diff_location\":null,\"outcome\":\"ok\",\"failure_class\":null,\"failure_detail\":null,\"retry_at\":null,\"last_verified\":null,\"remaining\":null,\"checks\":[{\"position\":1,\"command\":\"bun test\",\"result\":\"pass\",\"detail\":null}]}],\"events\":[{\"id\":\"01M7GMKFPHSEB8PWVXRH490VWM\",\"task_id\":\"01M7GMKFPGFWVVB9GXJW1J3XKM\",\"attempt_id\":null,\"kind\":\"created\",\"actor_role\":\"coordinator\",\"from_status\":null,\"to_status\":\"todo\",\"note\":null,\"created_at\":\"2026-11-15T22:17:49.009Z\"},{\"id\":\"01M7GMKG04TYJ1J7JWG2GZD6RW\",\"task_id\":\"01M7GMKFPGFWVVB9GXJW1J3XKM\",\"attempt_id\":null,\"kind\":\"status\",\"actor_role\":\"coordinator\",\"from_status\":\"todo\",\"to_status\":\"working\",\"note\":\"dispatched\",\"created_at\":\"2026-11-15T22:17:49.316Z\"},{\"id\":\"01M7GMKG4XJ60SCCY04GSW2V83\",\"task_id\":\"01M7GMKFPGFWVVB9GXJW1J3XKM\",\"attempt_id\":\"01M7GMKG4WCZ1G6J4ZX1FWGBB3\",\"kind\":\"attempt_started\",\"actor_role\":\"coordinator\",\"from_status\":null,\"to_status\":null,\"note\":\"T-004-A1\",\"created_at\":\"2026-11-15T22:17:49.469Z\"},{\"id\":\"01M7GMKG9N2AWTQAWS9ABA3AWS\",\"task_id\":\"01M7GMKFPGFWVVB9GXJW1J3XKM\",\"attempt_id\":\"01M7GMKG4WCZ1G6J4ZX1FWGBB3\",\"kind\":\"attempt_updated\",\"actor_role\":\"coordinator\",\"from_status\":null,\"to_status\":null,\"note\":\"T-004-A1: status dispatching->active, thread_id, fallbacks, commit, check\",\"created_at\":\"2026-11-15T22:17:49.621Z\"},{\"id\":\"01M7GMKGQFWTJPE5H9P49KV1MW\",\"task_id\":\"01M7GMKFPGFWVVB9GXJW1J3XKM\",\"attempt_id\":\"01M7GMKG4WCZ1G6J4ZX1FWGBB3\",\"kind\":\"attempt_finished\",\"actor_role\":\"coordinator\",\"from_status\":\"active\",\"to_status\":\"succeeded\",\"note\":\"T-004-A1\",\"created_at\":\"2026-11-15T22:17:50.063Z\"},{\"id\":\"01M7GMKGW5VJD3FJCRD3YAFRQE\",\"task_id\":\"01M7GMKFPGFWVVB9GXJW1J3XKM\",\"attempt_id\":null,\"kind\":\"status\",\"actor_role\":\"coordinator\",\"from_status\":\"working\",\"to_status\":\"review\",\"note\":null,\"created_at\":\"2026-11-15T22:17:50.213Z\"},{\"id\":\"01M7GMKH11Z7M23B5CEBEPJ8TQ\",\"task_id\":\"01M7GMKFPGFWVVB9GXJW1J3XKM\",\"attempt_id\":null,\"kind\":\"check\",\"actor_role\":\"coordinator\",\"from_status\":null,\"to_status\":null,\"note\":\"#1 pass: e\",\"created_at\":\"2026-11-15T22:17:50.369Z\"}]}\n",
+    "err": ""
+  },
+  {
+    "args": ["task", "next", "--project", "demo", "--json"],
+    "code": 0,
+    "out": "null\n",
+    "err": ""
+  },
+  {
+    "args": ["attempt", "show", "T-004-A1", "--project", "demo", "--reports"],
+    "code": 0,
+    "out": "DE-004-A1  succeeded  implementation  (delegate_task, fresh)\nmodel: claudeAgent/claude-test\nprofile: bounded\nstrategy: —\nreason: fixture\nthread: thread-a\ncommits: abc\nstarted: 2026-11-15T22:17:49.468Z\nended: 2026-11-15T22:17:50.062Z\noutcome: ok\ncheck 1: bun test -> pass\nreports: 1\n--- checkpoint 2026-11-15T22:17:49.772Z\nstep 1\nnext\n",
+    "err": ""
+  },
+  {
+    "args": ["attempt", "show", "T-004-A1", "--project", "demo", "--json"],
+    "code": 0,
+    "out": "{\"id\":\"01M7GMKG4WCZ1G6J4ZX1FWGBB3\",\"task_id\":\"01M7GMKFPGFWVVB9GXJW1J3XKM\",\"task_key\":\"DE-004\",\"key\":\"DE-004-A1\",\"kind\":\"implementation\",\"status\":\"succeeded\",\"mechanism\":\"delegate_task\",\"environment_id\":null,\"thread_id\":\"thread-a\",\"thread_link\":null,\"t3_task_id\":null,\"client_request_id\":null,\"provider_instance_id\":\"claudeAgent\",\"model\":\"claude-test\",\"options\":{\"effort\":\"high\"},\"executed_model\":null,\"profile\":\"bounded\",\"strategy\":null,\"coordinator_thread_id\":\"thread-coord\",\"coordinator_model\":\"claude-test\",\"reason\":\"fixture\",\"fallbacks\":[{\"route\":\"x\",\"failure\":\"quota\"}],\"context_mode\":\"fresh\",\"source_thread_id\":null,\"repair_of\":null,\"started_at\":\"2026-11-15T22:17:49.468Z\",\"ended_at\":\"2026-11-15T22:17:50.062Z\",\"base_commit\":null,\"worktree\":null,\"branch\":null,\"commits\":[\"abc\"],\"diff_location\":null,\"outcome\":\"ok\",\"failure_class\":null,\"failure_detail\":null,\"retry_at\":null,\"last_verified\":null,\"remaining\":null,\"checks\":[{\"position\":1,\"command\":\"bun test\",\"result\":\"pass\",\"detail\":null}],\"reports\":[{\"id\":\"01M7GMKGECTQEXXB5CZ63T7WJB\",\"attempt_id\":\"01M7GMKG4WCZ1G6J4ZX1FWGBB3\",\"attempt_key\":\"DE-004-A1\",\"kind\":\"checkpoint\",\"body\":\"step 1\\nnext\",\"created_at\":\"2026-11-15T22:17:49.772Z\"}]}\n",
+    "err": ""
+  },
+  {
+    "args": ["attempt", "show", "T-002-A2", "--project", "demo"],
+    "code": 0,
+    "out": "DE-002-A2  active  implementation  (delegate_task, fresh)\nmodel: codex/gpt-x\nprofile: bounded\nstrategy: —\nreason: fallback after quota\nthread: thread-w2\nrepair of: DE-002-A1\nstarted: 2026-11-15T22:17:48.856Z\n",
+    "err": ""
+  },
+  {
+    "args": ["stats", "--project", "demo"],
+    "code": 0,
+    "out": "project demo\n\nTASK          EVENTS     IN  OUT  READ  WRITE  REASONING        COST  AGG-EV  AGG-IN  AGG-OUT\nDE-004             3  1.50k  200   400    100         20  ~$0.000995       1     500       20\ncoordination       1    750  100   200     50         10  ~$0.000995       0       —        —\n\nTOTAL  EVENTS     IN  OUT  READ  WRITE  REASONING        COST  AGG-EV  AGG-IN  AGG-OUT\n            4  2.25k  300   600    150         30  ~$0.001990       1     500       20\nAGG-* are unpriced T3 subagent aggregates (1 events, 500 input, 20 output)\n2 events have no known price including 1 subagent aggregates (see price file)\nprices: litellm\n",
+    "err": ""
+  },
+  {
+    "args": ["stats", "--project", "demo", "--json"],
+    "code": 0,
+    "out": "{\"by\":\"task\",\"all_projects\":false,\"project\":{\"id\":\"01M7GMKFD22KAG73101C0JS7W7\",\"name\":\"demo\"},\"rows\":[{\"key\":\"DE-004\",\"spawns\":0,\"events\":3,\"subagent_events\":1,\"aggregate\":{\"events\":1,\"input_tokens\":500,\"output_tokens\":20},\"input_tokens\":1500,\"output_tokens\":200,\"cache_read_tokens\":400,\"cache_write_tokens\":100,\"reasoning_tokens\":20,\"cost\":{\"value\":0.000995,\"quality\":\"estimated\",\"reported_events\":0,\"estimated_events\":1,\"unknown_events\":2}},{\"key\":\"coordination\",\"spawns\":0,\"events\":1,\"subagent_events\":0,\"aggregate\":{\"events\":0,\"input_tokens\":null,\"output_tokens\":null},\"input_tokens\":750,\"output_tokens\":100,\"cache_read_tokens\":200,\"cache_write_tokens\":50,\"reasoning_tokens\":10,\"cost\":{\"value\":0.000995,\"quality\":\"estimated\",\"reported_events\":0,\"estimated_events\":1,\"unknown_events\":0}}],\"totals\":{\"events\":4,\"subagent_events\":1,\"aggregate\":{\"events\":1,\"input_tokens\":500,\"output_tokens\":20},\"input_tokens\":2250,\"output_tokens\":300,\"cache_read_tokens\":600,\"cache_write_tokens\":150,\"reasoning_tokens\":30,\"cost\":{\"value\":0.00199,\"quality\":\"estimated\",\"reported_events\":0,\"estimated_events\":2,\"unknown_events\":2}},\"price_sources\":[\"litellm\"],\"spawns\":0}\n",
+    "err": ""
+  },
+  {
+    "args": ["stats", "--project", "demo", "--by", "model"],
+    "code": 0,
+    "out": "project demo\n\nMODEL        SPAWNS  EVENTS     IN  OUT  READ  WRITE  REASONING        COST  AGG-EV  AGG-IN  AGG-OUT\nclaude-test       0       3  1.50k  200   400    100         20  ~$0.001990       1     500       20\nmystery           0       1    750  100   200     50         10           —       0       —        —\n\nTOTAL  SPAWNS  EVENTS     IN  OUT  READ  WRITE  REASONING        COST  AGG-EV  AGG-IN  AGG-OUT\n            0       4  2.25k  300   600    150         30  ~$0.001990       1     500       20\nAGG-* are unpriced T3 subagent aggregates (1 events, 500 input, 20 output)\n2 events have no known price including 1 subagent aggregates (see price file)\nprices: litellm\n",
+    "err": ""
+  },
+  {
+    "args": ["stats", "--project", "demo", "--by", "strategy"],
+    "code": 0,
+    "out": "project demo\n\nSTRATEGY      TASKS  SPAWNS  N  FIRST-PASS        COST\n—                 5       0  0           —           —\ncoordination      0       0  0           —  ~$0.000995\n\nn < 10: indicative\ncoordination: the coordinator thread's own usage, not a task\nprices: litellm\n",
+    "err": ""
+  },
+  {
+    "args": ["stats", "--project", "demo", "--by", "context"],
+    "code": 0,
+    "out": "project demo\n\nCONTEXT  TASKS  SPAWNS  N  FIRST-PASS  COST\nfresh        3       0  0           —     —\n\nn < 10: indicative\na task that changed context counts in each one\n",
+    "err": ""
+  },
+  {
+    "args": ["stats", "--project", "demo", "--by", "attempt", "--json"],
+    "code": 0,
+    "out": "{\"by\":\"attempt\",\"all_projects\":false,\"project\":{\"id\":\"01M7GMKFD22KAG73101C0JS7W7\",\"name\":\"demo\"},\"rows\":[{\"key\":\"DE-004-A1\",\"spawns\":0,\"events\":3,\"subagent_events\":1,\"aggregate\":{\"events\":1,\"input_tokens\":500,\"output_tokens\":20},\"input_tokens\":1500,\"output_tokens\":200,\"cache_read_tokens\":400,\"cache_write_tokens\":100,\"reasoning_tokens\":20,\"cost\":{\"value\":0.000995,\"quality\":\"estimated\",\"reported_events\":0,\"estimated_events\":1,\"unknown_events\":2}},{\"key\":\"coordination\",\"spawns\":0,\"events\":1,\"subagent_events\":0,\"aggregate\":{\"events\":0,\"input_tokens\":null,\"output_tokens\":null},\"input_tokens\":750,\"output_tokens\":100,\"cache_read_tokens\":200,\"cache_write_tokens\":50,\"reasoning_tokens\":10,\"cost\":{\"value\":0.000995,\"quality\":\"estimated\",\"reported_events\":0,\"estimated_events\":1,\"unknown_events\":0}}],\"totals\":{\"events\":4,\"subagent_events\":1,\"aggregate\":{\"events\":1,\"input_tokens\":500,\"output_tokens\":20},\"input_tokens\":2250,\"output_tokens\":300,\"cache_read_tokens\":600,\"cache_write_tokens\":150,\"reasoning_tokens\":30,\"cost\":{\"value\":0.00199,\"quality\":\"estimated\",\"reported_events\":0,\"estimated_events\":2,\"unknown_events\":2}},\"price_sources\":[\"litellm\"],\"spawns\":0}\n",
+    "err": ""
+  },
+  {
+    "args": ["stats", "--all-projects"],
+    "code": 0,
+    "out": "all projects\n\nTASK          EVENTS     IN  OUT  READ  WRITE  REASONING        COST  AGG-EV  AGG-IN  AGG-OUT\nDE-004             3  1.50k  200   400    100         20  ~$0.000995       1     500       20\ncoordination       1    750  100   200     50         10  ~$0.000995       0       —        —\nunattributed       2    760  105   200     50         10  ~$0.001195       0       —        —\n\nTOTAL  EVENTS     IN  OUT  READ  WRITE  REASONING        COST  AGG-EV  AGG-IN  AGG-OUT\n            6  3.01k  405   800    200         40  ~$0.003185       1     500       20\nAGG-* are unpriced T3 subagent aggregates (1 events, 500 input, 20 output)\n2 events have no known price including 1 subagent aggregates (see price file)\nprices: litellm, pi\n",
+    "err": ""
+  },
+  {
+    "args": ["stats", "--all-projects", "--by", "month", "--json"],
+    "code": 0,
+    "out": "{\"by\":\"month\",\"all_projects\":true,\"project\":null,\"rows\":[{\"key\":\"2026-11\",\"spawns\":0,\"events\":6,\"subagent_events\":1,\"aggregate\":{\"events\":1,\"input_tokens\":500,\"output_tokens\":20},\"input_tokens\":3010,\"output_tokens\":405,\"cache_read_tokens\":800,\"cache_write_tokens\":200,\"reasoning_tokens\":40,\"cost\":{\"value\":0.003185,\"quality\":\"estimated\",\"reported_events\":1,\"estimated_events\":3,\"unknown_events\":2}}],\"totals\":{\"events\":6,\"subagent_events\":1,\"aggregate\":{\"events\":1,\"input_tokens\":500,\"output_tokens\":20},\"input_tokens\":3010,\"output_tokens\":405,\"cache_read_tokens\":800,\"cache_write_tokens\":200,\"reasoning_tokens\":40,\"cost\":{\"value\":0.003185,\"quality\":\"estimated\",\"reported_events\":1,\"estimated_events\":3,\"unknown_events\":2}},\"price_sources\":[\"litellm\",\"pi\"],\"spawns\":0}\n",
+    "err": ""
+  },
+  {
+    "args": ["stats", "task", "T-004", "--project", "demo"],
+    "code": 0,
+    "out": "DE-004  review  Usage attribution\n\nATTEMPT              KIND     STATUS  EVENTS     IN  OUT  READ  WRITE  REASONING        COST  AGG-EV  AGG-IN  AGG-OUT\nDE-004-A1  implementation  succeeded       3  1.50k  200   400    100         20  ~$0.000995       1     500       20\n\nAGG-* are unpriced T3 subagent aggregates (1 events, 500 input, 20 output)\ncost so far (task not done): ~$0.000995\nevents: 3  attempts: 1\n2 events have no known price including 1 subagent aggregates\nprices: litellm\n",
+    "err": ""
+  },
+  {
+    "args": ["stats", "task", "T-004", "--project", "demo", "--json"],
+    "code": 0,
+    "out": "{\"task\":{\"key\":\"DE-004\",\"title\":\"Usage attribution\",\"status\":\"review\"},\"done\":false,\"attempts\":[{\"key\":\"DE-004-A1\",\"kind\":\"implementation\",\"status\":\"succeeded\",\"started_at\":\"2026-11-15T22:17:49.468Z\",\"ended_at\":\"2026-11-15T22:17:50.062Z\",\"events\":3,\"subagent_events\":1,\"aggregate\":{\"events\":1,\"input_tokens\":500,\"output_tokens\":20},\"input_tokens\":1500,\"output_tokens\":200,\"cache_read_tokens\":400,\"cache_write_tokens\":100,\"reasoning_tokens\":20,\"cost\":{\"value\":0.000995,\"quality\":\"estimated\",\"reported_events\":0,\"estimated_events\":1,\"unknown_events\":2},\"subagents\":{\"count\":0,\"groups\":[]}}],\"totals\":{\"events\":3,\"subagent_events\":1,\"aggregate\":{\"events\":1,\"input_tokens\":500,\"output_tokens\":20},\"input_tokens\":1500,\"output_tokens\":200,\"cache_read_tokens\":400,\"cache_write_tokens\":100,\"reasoning_tokens\":20,\"cost\":{\"value\":0.000995,\"quality\":\"estimated\",\"reported_events\":0,\"estimated_events\":1,\"unknown_events\":2}},\"cost_to_acceptance\":{\"value\":0.000995,\"quality\":\"estimated\",\"reported_events\":0,\"estimated_events\":1,\"unknown_events\":2},\"price_sources\":[\"litellm\"]}\n",
+    "err": ""
+  },
+  {
+    "args": ["task", "show", "T-404", "--project", "demo"],
+    "code": 1,
+    "out": "",
+    "err": "nf: task DE-404 not found\n"
+  },
+  {
+    "args": ["task", "set", "T-001", "--project", "demo"],
+    "code": 2,
+    "out": "",
+    "err": "nf: nothing to set (use --status, --blocker, --evidence, ...) (see 'nf help')\n"
+  },
+  {
+    "args": ["frobnicate"],
+    "code": 2,
+    "out": "",
+    "err": "nf: unknown command 'frobnicate' (see 'nf help')\n"
+  }
+]

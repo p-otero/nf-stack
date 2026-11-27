@@ -1,0 +1,31 @@
+{
+  "version": 2,
+  "skills": {
+    "eskais-mockup": {
+      "source": "p-otero/eskais-ui",
+      "ref": "v0.2.11",
+      "sourceType": "github",
+      "skillPath": "packages/mockup/skills/eskais-mockup/SKILL.md",
+      "computedHash": "38783246ff09fa3cf1fbc77b5b202d0ecfe40d2e92a3b4432d78dc0ea694e158"
+    },
+    "eskais-perf": {
+      "source": "p-otero/eskais-ui",
+      "ref": "v0.2.11",
+      "sourceType": "github",
+      "skillPath": "skills/eskais-perf/SKILL.md",
+      "computedHash": "9e1e2c6d4d7055144eacb7bbe57b99a37ade92f143c951eacbeccb35334fdc6e"
+    },
+    "eskais-ui": {
+      "source": "p-otero/eskais-ui",
+      "ref": "v0.2.11",
+      "sourceType": "github",
+      "skillPath": "skills/eskais-ui/SKILL.md",
+      "computedHash": "340e08eb2a66c26f1e3e5249cdd80cf205b5931e3d9929ae98a16811fd8cbc4a"
+    },
+    "ui-sdk": {
+      "source": "./packages/board/node_modules/@ui-sdk/core/skills/ui-sdk",
+      "sourceType": "local",
+      "computedHash": "9a60caf01da3d47beedf627bf1505d922dccc93b04f294c6aa64edf01c46b3ba"
+    }
+  }
+}

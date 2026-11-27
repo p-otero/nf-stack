@@ -1,0 +1,11 @@
+node_modules/
+*.log
+.nf/
+packages/board/dist/
+packages/nf/dist/
+packages/nf/skills/
+packages/nf/LICENSE
+packages/nf/README.md
+packages/nf/THIRD-PARTY-NOTICES.md
+packages/nf/*.tgz
+.claude/skills/

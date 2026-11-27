@@ -1,0 +1,36 @@
+{
+  "providers": [
+    {
+      "providerInstanceId": "pi",
+      "driverKind": "pi",
+      "displayName": "Pi",
+      "models": [
+        {
+          "id": "openai-codex/gpt-6.1-sol",
+          "options": [
+            {
+              "id": "thinking",
+              "values": ["low", "medium", "high"],
+              "default": "medium"
+            }
+          ]
+        },
+        {
+          "id": "acme/mystery-9",
+          "label": "Mystery 9",
+          "options": [{ "id": "thinking", "values": ["low", "high"], "default": "low" }]
+        }
+      ],
+      "canRunChildTask": true,
+      "constraints": []
+    },
+    {
+      "providerInstanceId": "grok",
+      "driverKind": "grok",
+      "displayName": "Grok",
+      "models": [{ "id": "grok-build" }],
+      "canRunChildTask": false,
+      "constraints": ["Provider instance is disabled."]
+    }
+  ]
+}

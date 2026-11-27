@@ -1,0 +1,35 @@
+{
+  "name": "nf-stack",
+  "private": true,
+  "type": "module",
+  "workspaces": [
+    "packages/*"
+  ],
+  "scripts": {
+    "setup": "node scripts/setup.mjs",
+    "nf": "node packages/cli/bin/nf.js",
+    "test": "bun test",
+    "lint": "effect-tsgo oxlint --type-aware --deny-warnings packages",
+    "fmt": "bun fmt --no-script packages/contracts packages/core packages/cli packages/board/src/main.tsx packages/board/src/contract.ts packages/board/src/components/nf packages/board/src/index.html packages/board/scripts packages/board/package.json packages/board/tsconfig.json packages/board/components.json packages/nf/package.json packages/nf/bin packages/nf/scripts packages/nf/test scripts package.json tsconfig.json .oxlintrc.json",
+    "fmt:check": "bun fmt --no-script --check packages/contracts packages/core packages/cli packages/board/src/main.tsx packages/board/src/contract.ts packages/board/src/components/nf packages/board/src/index.html packages/board/scripts packages/board/package.json packages/board/tsconfig.json packages/board/components.json packages/nf/package.json packages/nf/bin packages/nf/scripts packages/nf/test scripts package.json tsconfig.json .oxlintrc.json",
+    "typecheck": "bun check",
+    "verify": "bun run lint && bun run fmt:check && bun run typecheck && bun run board:check && bun run test",
+    "board:build": "bun run --cwd packages/board build",
+    "board:install": "bun run --cwd packages/board install-registry",
+    "board:check": "bun check -p packages/board",
+    "package:build": "node packages/nf/scripts/build.mjs",
+    "package:clean-install": "node packages/nf/scripts/clean-install.mjs",
+    "postinstall": "bun run board:build"
+  },
+  "devDependencies": {
+    "@effect/tsgo": "0.67.5",
+    "@p-otero/oxlint-rules": "github:p-otero/oxlint-rules#835a22baa11bdd98e5e2d5818de71dc84e66849d",
+    "@types/bun": "1.4.4",
+    "@types/node": "24.19.2",
+    "oxlint": "1.92.0",
+    "oxlint-tsgolint": "7.0.2006"
+  },
+  "engines": {
+    "node": ">=24.13"
+  }
+}

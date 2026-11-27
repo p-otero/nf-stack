@@ -1,0 +1,30 @@
+{
+  "$schema": "./node_modules/oxlint/configuration_schema.json",
+  "extends": [
+    "./node_modules/@p-otero/oxlint-rules/presets/base.json",
+    "./node_modules/@p-otero/oxlint-rules/presets/effect.json",
+    "./node_modules/@p-otero/oxlint-rules/presets/react.json",
+    "./node_modules/@p-otero/oxlint-rules/presets/react-agents.json"
+  ],
+  "jsPlugins": ["./node_modules/@p-otero/oxlint-rules/dist/plugin.js"],
+  "options": {
+    "typeAware": true,
+    "reportUnusedDisableDirectives": "error"
+  },
+  "overrides": [
+    {
+      "files": ["packages/*/test/**"],
+      "rules": {
+        "typescript/no-unsafe-type-assertion": "off",
+        "no-await-in-loop": "off",
+        "max-lines": "off"
+      }
+    }
+  ],
+  "ignorePatterns": [
+    "node_modules",
+    "skills",
+    "packages/board/src/components/ui",
+    "packages/board/src/lib"
+  ]
+}

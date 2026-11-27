@@ -1,0 +1,23 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>NF board</title>
+    <link rel="icon" href="data:," />
+    <!-- nf-board-style -->
+    <!-- Dark before the first paint when the system prefers it; the board's Appearance takes over from there. -->
+    <script>
+      document.documentElement.classList.toggle(
+        "dark",
+        matchMedia("(prefers-color-scheme: dark)").matches,
+      );
+    </script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <noscript>The NF board needs JavaScript.</noscript>
+    <!-- nf-board-data -->
+    <!-- nf-board-script -->
+  </body>
+</html>

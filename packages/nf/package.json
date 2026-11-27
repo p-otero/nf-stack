@@ -1,0 +1,49 @@
+{
+  "name": "@p-otero/nf-stack",
+  "version": "0.1.0",
+  "description": "Task and attempt state for NF-Stack: the nf CLI, its prebuilt board and its skills.",
+  "license": "MIT",
+  "type": "module",
+  "bin": {
+    "nf": "./bin/nf.js"
+  },
+  "files": [
+    "bin",
+    "dist",
+    "skills",
+    "LICENSE",
+    "THIRD-PARTY-NOTICES.md",
+    "README.md"
+  ],
+  "engines": {
+    "node": ">=24.13"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/p-otero/nf-stack.git",
+    "directory": "packages/nf"
+  },
+  "homepage": "https://github.com/p-otero/nf-stack#readme",
+  "bugs": {
+    "url": "https://github.com/p-otero/nf-stack/issues"
+  },
+  "keywords": [
+    "nf",
+    "tasks",
+    "attempts",
+    "t3-code",
+    "agents",
+    "sqlite"
+  ],
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
+  },
+  "scripts": {
+    "build": "node scripts/build.mjs",
+    "prepack": "node scripts/build.mjs"
+  },
+  "dependencies": {
+    "sharp": "0.35.5"
+  }
+}

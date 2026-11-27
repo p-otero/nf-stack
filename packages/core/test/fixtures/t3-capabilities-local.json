@@ -1,0 +1,147 @@
+{
+  "parentThreadId": "00000000-0000-4000-8000-000000000000",
+  "inheritedProviderInstanceId": "pi",
+  "inheritedModel": "opencode-go/deepseek-v4.1-flash",
+  "inheritedOptions": [{ "id": "thinking", "value": "max" }],
+  "runtimeMode": "full-access",
+  "interactionMode": "default",
+  "providers": [
+    {
+      "providerInstanceId": "codex",
+      "driverKind": "codex",
+      "displayName": "Codex",
+      "models": [
+        {
+          "id": "gpt-6.1-sol",
+          "options": [
+            {
+              "id": "reasoningEffort",
+              "values": ["low", "medium", "high", "xhigh", "max", "ultra"],
+              "default": "medium"
+            },
+            { "id": "serviceTier", "values": ["default", "priority"], "default": "default" }
+          ]
+        },
+        {
+          "id": "gpt-6-luna",
+          "options": [
+            {
+              "id": "reasoningEffort",
+              "values": ["low", "medium", "high", "xhigh", "max"],
+              "default": "medium"
+            }
+          ]
+        }
+      ],
+      "omittedModels": 4,
+      "canRunChildTask": true,
+      "canRunCrossProviderChildTask": true,
+      "constraints": []
+    },
+    {
+      "providerInstanceId": "claudeAgent",
+      "driverKind": "claudeAgent",
+      "displayName": "Claude",
+      "models": [
+        {
+          "id": "claude-sonnet-5-5",
+          "label": "Claude Sonnet 5.5",
+          "options": [
+            {
+              "id": "effort",
+              "values": ["low", "medium", "high", "xhigh", "max", "ultrathink"],
+              "default": "high"
+            },
+            { "id": "ultracode", "values": [false, true] }
+          ]
+        },
+        {
+          "id": "claude-opus-5-5",
+          "label": "Claude Opus 5.5",
+          "options": [
+            {
+              "id": "effort",
+              "values": ["low", "medium", "high", "xhigh", "max", "ultrathink"],
+              "default": "medium"
+            }
+          ]
+        }
+      ],
+      "omittedModels": 9,
+      "canRunChildTask": true,
+      "canRunCrossProviderChildTask": true,
+      "constraints": []
+    },
+    {
+      "providerInstanceId": "cursor",
+      "driverKind": "cursor",
+      "displayName": "Cursor",
+      "models": [],
+      "canRunChildTask": false,
+      "canRunCrossProviderChildTask": false,
+      "constraints": ["Provider instance is disabled."]
+    },
+    {
+      "providerInstanceId": "pi",
+      "driverKind": "pi",
+      "displayName": "Pi",
+      "models": [
+        {
+          "id": "openai/gpt-6.1-sol",
+          "label": "GPT-6.1 Sol",
+          "options": [{ "id": "thinking", "values": ["low", "medium", "high", "xhigh", "max"] }]
+        },
+        {
+          "id": "openai-codex/gpt-6-luna",
+          "label": "GPT-6 Luna",
+          "options": [
+            {
+              "id": "thinking",
+              "values": ["off", "minimal", "low", "medium", "high", "xhigh", "max"]
+            }
+          ]
+        },
+        {
+          "id": "openai-codex/gpt-6.1-terra",
+          "label": "GPT-6.1 Terra",
+          "options": [
+            {
+              "id": "thinking",
+              "values": ["off", "minimal", "low", "medium", "high", "xhigh", "max"]
+            }
+          ]
+        },
+        {
+          "id": "opencode-go/deepseek-v4.1-flash",
+          "label": "DeepSeek V4.1 Flash",
+          "options": [{ "id": "thinking", "values": ["low", "high", "max"] }]
+        },
+        {
+          "id": "opencode-go/glm-5.3-flash",
+          "label": "GLM-5.3 Flash",
+          "options": [{ "id": "thinking", "values": ["low", "high", "max"] }]
+        },
+        {
+          "id": "zai/glm-5.3",
+          "label": "GLM-5.3",
+          "options": [{ "id": "thinking", "values": ["low", "high", "max"] }]
+        }
+      ],
+      "omittedModels": 4,
+      "runtimeModes": ["approval-required", "auto-accept-edits", "full-access"],
+      "canRunChildTask": true,
+      "canRunCrossProviderChildTask": true,
+      "constraints": []
+    },
+    {
+      "providerInstanceId": "grok",
+      "driverKind": "grok",
+      "displayName": "Grok",
+      "models": [{ "id": "grok-build", "label": "Grok Build" }],
+      "runtimeModes": ["approval-required", "auto", "full-access"],
+      "canRunChildTask": false,
+      "canRunCrossProviderChildTask": false,
+      "constraints": ["Provider instance is disabled."]
+    }
+  ]
+}

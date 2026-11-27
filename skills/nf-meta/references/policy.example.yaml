@@ -1,0 +1,65 @@
+# NF routing policy. Each machine keeps its own copy at $NF_HOME/policy.yaml
+# (default ~/.nf/policy.yaml); this file is only the starting template.
+# Skills never hardcode model IDs: edit the machine's policy to change models.
+# Candidates are tried in order. A candidate is eligible only if it appears in the live
+# T3 catalog (orchestrator_capabilities) and its route is not blocked. Options use each
+# provider's native option name (Pi: thinking, Codex: reasoningEffort, Claude: effort).
+# Adding a model, a new prefix or a new provider instance requires the user's approval.
+#
+# A profile may also carry rules: `max_input_per_m` and `max_output_per_m` cap the model price
+# in USD per million tokens (the same chain `nf stats` costs with: LiteLLM, then OpenRouter's
+# public catalog, then `prices` below), `models` lists the models the profile may gain even
+# without a price, and `requires_approval` keeps the profile for the user's explicit request.
+# A profile with rules writes its candidates under `candidates:`.
+
+version: 1
+
+analysis_mode: review          # review | autonomous (overridable per project or task)
+
+profiles:
+  bounded:                     # clear acceptance, known pattern, limited impact, concrete checks
+    max_output_per_m: 15
+    candidates:
+      - { provider: pi, model: opencode-go/deepseek-v4.1-flash, options: { thinking: max } }
+      - { provider: pi, model: opencode-go/glm-5.3-flash, options: { thinking: max } }
+      - { provider: pi, model: openai-codex/gpt-6-luna, options: { thinking: medium }, max_options: { thinking: high } }
+      - { provider: claudeAgent, model: claude-sonnet-5-5, options: { effort: high } }
+  reasoning:                   # unresolved decision or diagnosis, contract still being defined
+    max_output_per_m: 20
+    candidates:
+      - { provider: pi, model: openai-codex/gpt-6.1-sol, options: { thinking: medium }, max_options: { thinking: high } }
+      - { provider: pi, model: zai/glm-5.3, options: { thinking: high } }
+      - { provider: pi, model: openai/gpt-6.1-sol, options: { thinking: medium }, max_options: { thinking: high } }
+  lookup:                      # locate code, extract facts, summarize sources
+    max_output_per_m: 15
+    candidates:
+      - { provider: pi, model: openai-codex/gpt-6-luna, options: { thinking: medium } }
+      - { provider: pi, model: opencode-go/deepseek-v4.1-flash, options: { thinking: max } }
+  review:                      # independent verification justified by risk or an evidence gap
+    max_output_per_m: 20
+    candidates:
+      - { provider: pi, model: zai/glm-5.3, options: { thinking: high } }
+      - { provider: pi, model: openai-codex/gpt-6.1-terra, options: { thinking: medium }, max_options: { thinking: high } }
+      - { provider: pi, model: openai-codex/gpt-6.1-sol, options: { thinking: medium }, max_options: { thinking: high } }
+      - { provider: claudeAgent, model: claude-sonnet-5-5, options: { effort: high } }
+  frontier:                    # the strongest models, only when the user asks for them
+    requires_approval: true
+    models: [ claude-fable-5-2, gpt-6-astra ]
+    candidates:
+      - { provider: claudeAgent, model: claude-fable-5-2, options: { effort: max } }
+      - { provider: pi, model: openai-codex/gpt-6-astra, options: { thinking: high } }
+
+disabled: []                   # models to skip without deleting them, e.g. [ "pi:openai/gpt-6.1-sol" ]
+
+# Prices for models neither LiteLLM nor OpenRouter's catalog knows, in USD per million tokens.
+# Keys are `<provider>/<model>` or the model id alone, e.g. "opencode-go/glm-5.3-flash".
+prices: {}
+
+context_transfer:
+  default: fresh               # fresh | fork | reuse
+  never_reuse_for: [ review ]
+
+recovery:
+  pi_usage_limit_with_reset: schedule_task   # standing authorization: schedule a resume of the same thread at the reported reset
+  max_repair_cycles: 2                       # consecutive cycles without verified progress before a blocker
+  reasoning_escalations: 1                   # automatic diagnostic escalations per blocker

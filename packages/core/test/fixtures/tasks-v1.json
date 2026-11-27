@@ -1,0 +1,96 @@
+{
+  "schema_version": 1,
+  "coordinator": {
+    "environment_id": null,
+    "thread_id": "thread-coordinator-1",
+    "thread_link": "t3://thread/thread-coordinator-1"
+  },
+  "tasks": [
+    {
+      "id": "T-001",
+      "title": "Add login endpoint",
+      "goal": "Users can log in with a password",
+      "acceptance": [
+        "POST /login returns 200 for valid credentials",
+        "POST /login returns 401 for a bad password"
+      ],
+      "status": "done",
+      "depends_on": [],
+      "authorization": "Edit src/auth only. No push, no deploy.",
+      "attempts": [
+        {
+          "id": "T-001-A1",
+          "kind": "implementation",
+          "status": "succeeded",
+          "provider_instance_id": "codex",
+          "model": "gpt-x",
+          "thread_id": "thread-w1",
+          "task_id": "t3-task-1",
+          "client_request_id": "req-1",
+          "base_commit": "abc1234",
+          "worktree": "/work/t1",
+          "branch": "feat/login",
+          "commits": ["def5678"],
+          "routing": {
+            "profile": "bounded",
+            "delegated_mode": "delegate_task",
+            "reason": "small, well specified change"
+          },
+          "failure": null,
+          "last_verified": "bun test passes",
+          "remaining": null
+        }
+      ],
+      "evidence": "bun test -> PASS; commit def5678"
+    },
+    {
+      "id": "T-002",
+      "title": "Rate limit login",
+      "goal": "Repeated bad logins are throttled",
+      "acceptance": ["6th bad login within a minute returns 429"],
+      "status": "working",
+      "depends_on": ["T-001"],
+      "attempts": [
+        {
+          "id": "T-002-A1",
+          "kind": "implementation",
+          "status": "failed",
+          "provider_instance_id": "claude",
+          "model": "sonnet",
+          "routing": {
+            "profile": "reasoning",
+            "delegated_mode": "fork",
+            "reason": "needs conversation context"
+          },
+          "failure": "quota exhausted until 18:00",
+          "retry_at": "2026-11-15T18:00:00Z"
+        },
+        {
+          "id": "T-002-A2",
+          "kind": "implementation",
+          "status": "active",
+          "repair_of": "T-002-A1",
+          "provider_instance_id": "codex",
+          "model": "gpt-x",
+          "thread_id": "thread-w2",
+          "routing": {
+            "profile": "bounded",
+            "delegated_mode": "delegate_task",
+            "reason": "fallback after quota"
+          }
+        }
+      ],
+      "blocker": { "identity": "quota", "no_progress_cycles": 0 }
+    },
+    {
+      "id": "T-003",
+      "title": "Document login",
+      "goal": "README explains the login flow",
+      "acceptance": ["README has a Login section"],
+      "status": "todo",
+      "depends_on": ["T-001", "T-002"],
+      "attempts": [],
+      "design_ref": "docs/login.md"
+    }
+  ]
+}

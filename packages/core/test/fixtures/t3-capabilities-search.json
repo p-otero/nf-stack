@@ -1,0 +1,36 @@
+{
+  "providers": [
+    {
+      "providerInstanceId": "pi",
+      "driverKind": "pi",
+      "displayName": "Pi",
+      "models": [
+        {
+          "id": "openai/gpt-6-astra",
+          "label": "GPT-6 Astra",
+          "options": [
+            {
+              "id": "thinking",
+              "values": ["low", "medium", "high", "max"]
+            }
+          ]
+        },
+        {
+          "id": "openai-codex/gpt-6-luna",
+          "label": "GPT-6 Luna",
+          "options": [
+            {
+              "id": "thinking",
+              "values": ["off", "minimal"],
+              "default": "minimal"
+            }
+          ]
+        }
+      ],
+      "omittedModels": 1,
+      "canRunChildTask": true,
+      "canRunCrossProviderChildTask": true,
+      "constraints": []
+    }
+  ]
+}

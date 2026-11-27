@@ -1,0 +1,13 @@
+{
+  "$schema": "https://t3.codes/schema/t3.json",
+  "scripts": [
+    {
+      "name": "Board",
+      "command": "nf serve",
+      "icon": "play",
+      "previewUrl": "http://localhost:4646/?project=NF",
+      "autoOpenPreview": true,
+      "runOnWorktreeCreate": false
+    }
+  ]
+}
