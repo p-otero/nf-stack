@@ -31,6 +31,14 @@ function tmp(prefix: string): string {
   return dir;
 }
 
+function gitProject(): string {
+  const cwd = tmp("nf-reconcile-cwd-");
+  execFileSync("git", ["init", "-q"], { cwd });
+  execFileSync("git", ["config", "user.name", "Test"], { cwd });
+  execFileSync("git", ["config", "user.email", "test@example.test"], { cwd });
+  return cwd;
+}
+
 const NOW = Date.now();
 const minutesAgo = (minutes: number): string => new Date(NOW - minutes * 60_000).toISOString();
 
@@ -76,8 +84,7 @@ interface LivenessJson {
 
 function setup(): { nf: ReturnType<typeof runner>; t3: string } {
   const home = tmp("nf-reconcile-home-");
-  const cwd = tmp("nf-reconcile-cwd-");
-  execFileSync("git", ["init", "-q"], { cwd });
+  const cwd = gitProject();
   const data = tmp("nf-reconcile-t3-");
   const state = t3State(data);
   thread(state.db, "thread-live");
@@ -149,8 +156,7 @@ function dispatched(threadExists: boolean): {
   clientRequestId: string;
 } {
   const home = tmp("nf-reconcile-home-");
-  const cwd = tmp("nf-reconcile-cwd-");
-  execFileSync("git", ["init", "-q"], { cwd });
+  const cwd = gitProject();
   const data = tmp("nf-reconcile-t3-");
   const state = t3State(data);
   const clientRequestId = "demo-T-001-A1";
@@ -329,8 +335,7 @@ describe("nf attempt reconcile", () => {
 
   test("a reuse attempt start prints its default client id and binds the run of its send", () => {
     const home = tmp("nf-reconcile-home-");
-    const cwd = tmp("nf-reconcile-cwd-");
-    execFileSync("git", ["init", "-q"], { cwd });
+    const cwd = gitProject();
     const data = tmp("nf-reconcile-t3-");
     const state = t3State(data);
     const conversation = "thread-conversation";
@@ -400,8 +405,7 @@ describe("nf attempt reconcile", () => {
 
   test("binds the thread T3 created without the coordinator passing any client request id", () => {
     const home = tmp("nf-reconcile-home-");
-    const cwd = tmp("nf-reconcile-cwd-");
-    execFileSync("git", ["init", "-q"], { cwd });
+    const cwd = gitProject();
     const data = tmp("nf-reconcile-t3-");
     const state = t3State(data);
     // T3 generated the id the thread embeds; only its projection of the brief names the attempt.

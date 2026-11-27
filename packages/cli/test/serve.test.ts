@@ -49,8 +49,19 @@ function tmp(prefix: string): string {
   return dir;
 }
 
+const GIT_IDENTITY = {
+  GIT_AUTHOR_NAME: "Test",
+  GIT_AUTHOR_EMAIL: "test@example.test",
+  GIT_COMMITTER_NAME: "Test",
+  GIT_COMMITTER_EMAIL: "test@example.test",
+};
+
 function git(cwd: string, args: string[]): string {
-  const result = spawnSync("git", args, { cwd, encoding: "utf8" });
+  const result = spawnSync("git", args, {
+    cwd,
+    encoding: "utf8",
+    env: { ...process.env, ...GIT_IDENTITY },
+  });
   if (result.status !== 0) throw new Error(`git ${args.join(" ")} failed: ${result.stderr}`);
   return result.stdout.trim();
 }
@@ -629,16 +640,7 @@ describe("nf serve", () => {
     const cwd = project(home, "git api", "GA", "Git task");
     writeFileSync(join(cwd, "README.md"), "# git api\n");
     git(cwd, ["add", "README.md"]);
-    git(cwd, [
-      "-c",
-      "user.name=T",
-      "-c",
-      "user.email=t@example.test",
-      "commit",
-      "-q",
-      "-m",
-      "First",
-    ]);
+    git(cwd, ["commit", "-q", "-m", "First"]);
     const served = await serve(home);
     const get = async (path: string) => {
       const response = await fetch(`${served.origin}${path}`);
@@ -681,16 +683,7 @@ describe("nf serve", () => {
     const cwd = project(home, "hostile", "HO", "Hostile task");
     const commitAll = (message: string) => {
       git(cwd, ["add", "-A"]);
-      git(cwd, [
-        "-c",
-        "user.name=T",
-        "-c",
-        "user.email=t@example.test",
-        "commit",
-        "-q",
-        "-m",
-        message,
-      ]);
+      git(cwd, ["commit", "-q", "-m", message]);
     };
     writeFileSync(join(cwd, "victim...main"), "keep\n");
     commitAll("First");
@@ -703,16 +696,7 @@ describe("nf serve", () => {
     git(outsider, ["init", "-q", "-b", "main"]);
     writeFileSync(join(outsider, "secret.txt"), "s\n");
     git(outsider, ["add", "-A"]);
-    git(outsider, [
-      "-c",
-      "user.name=T",
-      "-c",
-      "user.email=t@example.test",
-      "commit",
-      "-q",
-      "-m",
-      "Outside",
-    ]);
+    git(outsider, ["commit", "-q", "-m", "Outside"]);
     mkdirSync(join(cwd, "leak"));
     writeFileSync(join(cwd, "leak", ".git"), `gitdir: ${join(outsider, ".git")}\n`);
     const files = () =>

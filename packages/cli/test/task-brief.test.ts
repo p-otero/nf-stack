@@ -20,6 +20,8 @@ function tmp(prefix: string): string {
 function repo(): string {
   const dir = tmp("nf-brief-repo-");
   execFileSync("git", ["init", "-q"], { cwd: dir });
+  execFileSync("git", ["config", "user.name", "Test"], { cwd: dir });
+  execFileSync("git", ["config", "user.email", "test@example.test"], { cwd: dir });
   execFileSync("git", ["remote", "add", "origin", "https://example.test/brief.git"], { cwd: dir });
   return dir;
 }

@@ -14,6 +14,8 @@ const home = join(work, "home");
 const proj = join(work, "demo");
 mkdirSync(proj);
 execFileSync("git", ["init", "-q"], { cwd: proj });
+execFileSync("git", ["config", "user.name", "Test"], { cwd: proj });
+execFileSync("git", ["config", "user.email", "test@example.test"], { cwd: proj });
 execFileSync("git", ["remote", "add", "origin", "https://example.test/demo.git"], { cwd: proj });
 
 const data = join(work, "data");

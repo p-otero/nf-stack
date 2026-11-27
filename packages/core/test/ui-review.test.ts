@@ -41,8 +41,19 @@ const changed = (path: string, lines: number, added = false): ChangedFile => ({
   added,
 });
 
+const GIT_IDENTITY = {
+  GIT_AUTHOR_NAME: "Test",
+  GIT_AUTHOR_EMAIL: "test@example.test",
+  GIT_COMMITTER_NAME: "Test",
+  GIT_COMMITTER_EMAIL: "test@example.test",
+};
+
 function git(cwd: string, args: string[]): string {
-  const result = spawnSync("git", args, { cwd, encoding: "utf8" });
+  const result = spawnSync("git", args, {
+    cwd,
+    encoding: "utf8",
+    env: { ...process.env, ...GIT_IDENTITY },
+  });
   if (result.status !== 0) throw new Error(`git ${args.join(" ")} failed: ${result.stderr}`);
   return result.stdout.trim();
 }
@@ -56,16 +67,7 @@ function commit(repo: string, files: Readonly<Record<string, string>>, message: 
     writeFileSync(join(repo, path), text, "utf8");
     git(repo, ["add", path]);
   }
-  git(repo, [
-    "-c",
-    "user.name=nf",
-    "-c",
-    "user.email=nf@example.test",
-    "commit",
-    "-q",
-    "-m",
-    message,
-  ]);
+  git(repo, ["commit", "-q", "-m", message]);
   return git(repo, ["rev-parse", "HEAD"]);
 }
 

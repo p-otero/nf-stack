@@ -22,6 +22,13 @@ function tmp(prefix: string): string {
   return dir;
 }
 
+const GIT_IDENTITY = {
+  GIT_AUTHOR_NAME: "Test",
+  GIT_AUTHOR_EMAIL: "test@example.test",
+  GIT_COMMITTER_NAME: "Test",
+  GIT_COMMITTER_EMAIL: "test@example.test",
+};
+
 function repo(): string {
   const dir = tmp("nf-ui-repo-");
   spawnSync("git", ["init", "-q"], { cwd: dir });
@@ -30,7 +37,11 @@ function repo(): string {
 }
 
 function git(cwd: string, args: string[]): string {
-  const result = spawnSync("git", args, { cwd, encoding: "utf8" });
+  const result = spawnSync("git", args, {
+    cwd,
+    encoding: "utf8",
+    env: { ...process.env, ...GIT_IDENTITY },
+  });
   if (result.status !== 0) throw new Error(`git ${args.join(" ")} failed: ${result.stderr}`);
   return result.stdout.trim();
 }
@@ -42,16 +53,7 @@ function commit(cwd: string, name: string, text: string): string {
   mkdirSync(join(cwd, dirname(name)), { recursive: true });
   writeFileSync(join(cwd, name), text, "utf8");
   git(cwd, ["add", name]);
-  git(cwd, [
-    "-c",
-    "user.name=nf",
-    "-c",
-    "user.email=nf@example.test",
-    "commit",
-    "-q",
-    "-m",
-    `change ${name}`,
-  ]);
+  git(cwd, ["commit", "-q", "-m", `change ${name}`]);
   return git(cwd, ["rev-parse", "HEAD"]);
 }
 
