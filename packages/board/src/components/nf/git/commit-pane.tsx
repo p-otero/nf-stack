@@ -1,10 +1,11 @@
 import { CopyIcon, Maximize2Icon } from "lucide-react";
 import type { GitCommitDetail } from "@nf/contracts";
-import type { Writable } from "@/contract";
+import { DiffPane } from "@/components/nf/git/diff-pane";
+import { toPatchSet } from "@/components/nf/git/patch-set";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { GitDiff } from "@/components/ui/git-diff";
 import { RelativeTime } from "@/components/ui/relative-time";
+import { cn } from "@/lib/utils";
 
 const copyHash = (sha: string): void => {
   void navigator.clipboard?.writeText(sha);
@@ -14,10 +15,13 @@ function CommitPane({
   detail,
   timeZone,
   onOpenFull,
+  className,
 }: {
-  detail: Writable<GitCommitDetail>;
+  detail: GitCommitDetail;
   timeZone?: string;
   onOpenFull?: () => void;
+  /** The pane's box: it fills the height its parent gives it. */
+  className?: string;
 }) {
   const { commit } = detail;
   const hash = commit.sha.slice(0, 7);
@@ -30,12 +34,11 @@ function CommitPane({
   return (
     <section
       aria-label={`Commit ${hash}`}
-      className="flex min-h-0 min-w-0 flex-1 flex-col gap-items"
+      className={cn("flex min-h-0 min-w-0 flex-col gap-items", className)}
     >
       <header className="flex flex-col gap-inline rounded-surface border bg-card px-inset-item py-inset-item">
         <div className="flex items-start gap-items">
           <h2 className="min-w-0 flex-1 text-body font-medium">{commit.subject}</h2>
-          {detail.truncated ? <Badge tone="warning">patch truncated</Badge> : null}
           {onOpenFull ? (
             <Button variant="ghost" size="sm" onClick={onOpenFull}>
               <Maximize2Icon />
@@ -76,11 +79,11 @@ function CommitPane({
             ))}
         </div>
       </header>
-      <GitDiff
+      <DiffPane
         key={commit.sha}
-        aria-label={`Changes in ${hash}`}
+        label={`Changes in ${hash}`}
         patch={detail.patch}
-        fileTree="collapsible"
+        truncations={[{ what: `Commit ${hash}`, truncation: toPatchSet(detail).truncation }]}
         className="min-h-0 flex-1"
       />
     </section>

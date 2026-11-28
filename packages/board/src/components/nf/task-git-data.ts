@@ -6,6 +6,8 @@ import type {
   TaskBranch,
 } from "@nf/contracts";
 
+import type { PatchSet } from "@/components/nf/git/patch-set";
+import { toPatchSet } from "@/components/nf/git/patch-set";
 import { boardViewHref } from "@/components/nf/git/git-model";
 
 export const projectOfTask = (key: string): string => {
@@ -85,6 +87,22 @@ export const branchHistoryHref = (
   });
 };
 
+/** The Git tab's full view of one commit of the task's branch. */
+export const commitViewHref = (
+  current: string,
+  branch: Pick<TaskBranch, "task" | "repo" | "name" | "worktree">,
+  commit: string,
+): string => {
+  const url = new URL(current);
+  url.searchParams.set("project", projectOfTask(branch.task));
+  return boardViewHref(url.href, "git", {
+    repo: branch.repo,
+    branch: branch.name,
+    commit,
+    worktree: branch.worktree,
+  });
+};
+
 export const readTaskBranch = async (task: string): Promise<TaskBranch | null> => {
   const body = await getJson(`/api/tasks/${encodeURIComponent(task)}/branch`);
   return body === null ? null : isBranch(body) ? body : throwShape("task branch");
@@ -122,51 +140,6 @@ export const readCommitDetail = async (
 
 const throwShape = (what: string): never => {
   throw new Error(`the git API answered with an unexpected ${what}`);
-};
-
-export type Truncation = { shown: number; total: number; missing: readonly string[] };
-
-export type PatchSet = {
-  files: number;
-  additions: number;
-  deletions: number;
-  patch: string;
-  truncation: Truncation | null;
-};
-
-const DIFF_HEADER = "diff --git ";
-
-const patchHeaders = (patch: string): string[] =>
-  patch.split("\n").filter((line) => line.startsWith(DIFF_HEADER));
-
-export const truncationOf = (
-  set: Pick<GitChangeSet, "files" | "patch" | "truncated">,
-): Truncation | null => {
-  if (!set.truncated) return null;
-  const headers = patchHeaders(set.patch);
-  const missing = set.files
-    .map((file) => file.path)
-    .filter(
-      (path) =>
-        !headers.some((header) => header.endsWith(` b/${path}`) || header.endsWith(` "b/${path}"`)),
-    );
-  return { shown: set.files.length - missing.length, total: set.files.length, missing };
-};
-
-export const toPatchSet = (set: Pick<GitChangeSet, "files" | "patch" | "truncated">): PatchSet => {
-  const lines = set.files.reduce(
-    (sum, file) => ({
-      additions: sum.additions + (file.additions ?? 0),
-      deletions: sum.deletions + (file.deletions ?? 0),
-    }),
-    { additions: 0, deletions: 0 },
-  );
-  return {
-    files: set.files.length,
-    ...lines,
-    patch: set.patch,
-    truncation: truncationOf(set),
-  };
 };
 
 export type WorktreeChanges = {

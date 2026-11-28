@@ -43,13 +43,9 @@ function TaskChangesBody({
           onChange={setSelected}
           now={now}
         />
-        <TaskChangesDiff
-          project={project}
-          repo={branch.repo}
-          base={base}
-          changes={changes}
-          selected={shown}
-        />
+        <div className="flex min-w-0 flex-1 flex-col">
+          <TaskChangesDiff project={project} branch={branch} changes={changes} selected={shown} />
+        </div>
       </div>
     </div>
   );

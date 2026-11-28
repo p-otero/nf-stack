@@ -1,4 +1,4 @@
-import type { PatchSet } from "@/components/nf/task-git-data";
+import type { PatchSet } from "@/components/nf/git/patch-set";
 
 function PatchTotals({ set }: { set: PatchSet }) {
   return (

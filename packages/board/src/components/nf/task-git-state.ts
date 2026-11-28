@@ -1,15 +1,15 @@
 import { useQuery } from "@tanstack/react-query";
 
-import type { GitBranchCommit, TaskBranch } from "@nf/contracts";
+import type { GitBranchCommit, GitWorktree, TaskBranch } from "@nf/contracts";
 import type { TaskView } from "@/lib/agent-task-types";
+import type { PatchSet } from "@/components/nf/git/patch-set";
+import { toPatchSet } from "@/components/nf/git/patch-set";
 import {
   projectOfTask,
   readTaskBranch,
   readTaskCompare,
   readTaskWorktree,
-  toPatchSet,
   toWorktreeChanges,
-  type PatchSet,
   type WorktreeChanges,
 } from "@/components/nf/task-git-data";
 
@@ -31,7 +31,7 @@ type WorktreeState =
   | { kind: "none" }
   | { kind: "loading" }
   | ({ kind: "error" } & Failure)
-  | { kind: "ready"; changes: WorktreeChanges };
+  | { kind: "ready"; worktree: GitWorktree; changes: WorktreeChanges };
 
 interface ChangesData {
   commits: readonly GitBranchCommit[];
@@ -64,7 +64,8 @@ const worktreeState = (
   query: QueryLike<Parameters<typeof toWorktreeChanges>[0]>,
 ): WorktreeState => {
   if (!hasWorktree) return { kind: "none" };
-  if (query.data !== undefined) return { kind: "ready", changes: toWorktreeChanges(query.data) };
+  if (query.data !== undefined)
+    return { kind: "ready", worktree: query.data, changes: toWorktreeChanges(query.data) };
   if (query.isError)
     return {
       kind: "error",
