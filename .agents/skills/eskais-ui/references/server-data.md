@@ -4,8 +4,8 @@ Tables, lists and comboboxes over any backend. Four layers, each its own registr
 
 | Layer                 | Item                                                                                                                   | What it is                                                                                         |
 | --------------------- | ---------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------- |
-| Contract and adapters | `page-source`                                                                                                          | `PageSource`, `PageRequest`, `PageResult`; an adapter per paging style; `createPageController`     |
-| Filters               | `filter-schema`                                                                                                        | `defineFilters`, `FilterValues`, the canonical AST, serializers, the URL codec, `parseFilterInput` |
+| Contract and adapters | `page-source`, an adapter item per backend                                                                             | `PageSource`, `PageRequest`, `PageResult`; an adapter per paging style; `createPageController`     |
+| Filters               | `filter-schema`, a dialect item per query language                                                                     | `defineFilters`, `FilterValues`, the canonical AST, serializers, the URL codec, `parseFilterInput` |
 | Data layer            | `server-data`                                                                                                          | Hooks on TanStack Query 5 with return types of their own, `DataProvider`                           |
 | UI                    | `server-data-table`, `server-list`, `server-combobox`, `filter-search`, `filter-chips`, `filter-panel`, `filter-field` | Components built on the hooks                                                                      |
 
@@ -13,7 +13,7 @@ Tables, lists and comboboxes over any backend. Four layers, each its own registr
 
 ## 1. Wrap the endpoint in a source
 
-Pick the adapter for how the backend pages. Adapters never fetch: they build the call and read the answer.
+Pick the adapter for how the backend pages. Each adapter is a registry item of its own (the Item column below), so add only the one your backend speaks: `npx shadcn@latest add @eskais/page-source-rest`. `server-data-table` and the other components bring `page-source` but no adapter. Adapters never fetch: they build the call and read the answer. For a protocol none of them covers, build a source with the kit in `page-source`: `adapterSource`, `pageNumberOf`, `cursorPositionOf`, `appendParams`, `writeSort` and `restCallOf`.
 
 ```ts
 import { readJson } from "@/lib/page-source"
@@ -29,17 +29,17 @@ const tasks = pagedSource<Task, TaskFilter>({
 })
 ```
 
-| Backend           | Adapter                                                            | Request                                             | Response read                                          |
-| ----------------- | ------------------------------------------------------------------ | --------------------------------------------------- | ------------------------------------------------------ |
-| `?page=&size=`    | `pagedSource({ base })`                                            | `page`, `size`, `sort`                              | `{ items, total?, hasMore? }` or `read`                |
-| `?offset=&limit=` | `offsetSource`                                                     | `offset`, `limit`                                   | same                                                   |
-| Opaque cursors    | `cursorSource`                                                     | `cursor` forward, `before` backward, `limit`        | `{ items, nextCursor, prevCursor, hasMore }`           |
-| Keyset            | `cursorSource({ keyset: { cursor: (row) => key } })`               | asks for one more row than the page                 | builds cursors from the first and last row             |
-| GraphQL Relay     | `relaySource({ connection })`                                      | `first`/`after` or `last`/`before`                  | `edges` (or `nodes`), `pageInfo`, `totalCount`         |
-| RFC 8288 `Link`   | `linkHeaderSource({ position })`                                   | `page`, `per_page`, or follows the links            | the body as rows, `next`/`prev`/`last` from the header |
-| Spring `Page<T>`  | `springPageSource`                                                 | `page` (0-based), `size`, `sort=field,asc` repeated | `content`, `totalElements`, or `PagedModel`'s `page`   |
-| Spring `Slice<T>` | `springSliceSource`                                                | same                                                | `content`, `last`, `first`                             |
-| Memory            | `arraySource(items, { filter, search, sort, delay, fail, count })` | none                                                | pages the array; honours abort                         |
+| Backend           | Adapter                                                            | Request                                             | Response read                                          | Item                 |
+| ----------------- | ------------------------------------------------------------------ | --------------------------------------------------- | ------------------------------------------------------ | -------------------- |
+| `?page=&size=`    | `pagedSource({ base })`                                            | `page`, `size`, `sort`                              | `{ items, total?, hasMore? }` or `read`                | `page-source-rest`   |
+| `?offset=&limit=` | `offsetSource`                                                     | `offset`, `limit`                                   | same                                                   | `page-source-rest`   |
+| Opaque cursors    | `cursorSource`                                                     | `cursor` forward, `before` backward, `limit`        | `{ items, nextCursor, prevCursor, hasMore }`           | `page-source-cursor` |
+| Keyset            | `cursorSource({ keyset: { cursor: (row) => key } })`               | asks for one more row than the page                 | builds cursors from the first and last row             | `page-source-cursor` |
+| GraphQL Relay     | `relaySource({ connection })`                                      | `first`/`after` or `last`/`before`                  | `edges` (or `nodes`), `pageInfo`, `totalCount`         | `page-source-relay`  |
+| RFC 8288 `Link`   | `linkHeaderSource({ position })`                                   | `page`, `per_page`, or follows the links            | the body as rows, `next`/`prev`/`last` from the header | `page-source-link`   |
+| Spring `Page<T>`  | `springPageSource`                                                 | `page` (0-based), `size`, `sort=field,asc` repeated | `content`, `totalElements`, or `PagedModel`'s `page`   | `page-source-spring` |
+| Spring `Slice<T>` | `springSliceSource`                                                | same                                                | `content`, `last`, `first`                             | `page-source-spring` |
+| Memory            | `arraySource(items, { filter, search, sort, delay, fail, count })` | none                                                | pages the array; honours abort                         | `page-source`        |
 
 `sortStyle` writes the sort: `"comma"` (`sort=name,asc`, repeated), `"dot"` (`sort=name.asc,id.desc`), `"sign"` (`sort=name,-id`) or a function. `fetchTotal` (any adapter's option) counts separately; the hooks run it as its own query.
 
@@ -66,15 +66,17 @@ type TaskFilter = FilterValues<typeof taskFilters>
 - `$where` adds an expression with `or`/`not` groups, checked against the schema's fields.
 - A date range's end is inclusive (`lte`); `end: "next-day"` sends `lt` the day after for date-time columns.
 
-| Wire format   | Serializer                                                            | Grammar          | Use for                            |
-| ------------- | --------------------------------------------------------------------- | ---------------- | ---------------------------------- |
-| Flat params   | `queryParams(ast, { style: "suffix" \| "dto" \| "bracket", arrays })` | `and` only       | DTOs, json-server, Django filters  |
-| RSQL / FIQL   | `rsql(ast, { isNull })`                                               | and, or, nesting | rsql-jpa-specification and similar |
-| OData         | `odata(ast, { inOperator })`                                          | full             | ASP.NET OData, SAP                 |
-| Spring Filter | `springFilter(ast, { module, like })`                                 | and, or, not     | turkraft/springfilter              |
-| JSON          | `jsonAst(ast)`                                                        | full             | a POST body                        |
-| GraphQL       | `graphqlWhere(ast, { dialect: "hasura" \| "prisma" })`                | typed            | Hasura, Prisma                     |
-| Search only   | `searchOnly(schema, values, { param })`                               | text             | a `q` endpoint                     |
+| Wire format   | Serializer                                                            | Grammar          | Use for                            | Item             |
+| ------------- | --------------------------------------------------------------------- | ---------------- | ---------------------------------- | ---------------- |
+| Flat params   | `queryParams(ast, { style: "suffix" \| "dto" \| "bracket", arrays })` | `and` only       | DTOs, json-server, Django filters  | `filter-schema`  |
+| RSQL / FIQL   | `rsql(ast, { isNull })`                                               | and, or, nesting | rsql-jpa-specification and similar | `filter-rsql`    |
+| OData         | `odata(ast, { inOperator })`                                          | full             | ASP.NET OData, SAP                 | `filter-odata`   |
+| Spring Filter | `springFilter(ast, { module, like })`                                 | and, or, not     | turkraft/springfilter              | `filter-spring`  |
+| JSON          | `jsonAst(ast)`                                                        | full             | a POST body                        | `filter-schema`  |
+| GraphQL       | `graphqlWhere(ast, { dialect: "hasura" \| "prisma" })`                | typed            | Hasura, Prisma                     | `filter-graphql` |
+| Search only   | `searchOnly(schema, values, { param })`                               | text             | a `q` endpoint                     | `filter-schema`  |
+
+`queryParams`, `jsonAst` and `searchOnly` come with `filter-schema`; each query language is an item of its own (the Item column), so add only the one your server reads: `npx shadcn@latest add @eskais/filter-rsql`.
 
 Every serializer escapes for its grammar, or throws `FilterSerializeError` for what it can't write safely (a wildcard inside a text match, `NaN`, a date OData can't write). Dates: `dates: "iso" | "iso-date" | "epoch-ms" | (value) => string`, ISO 8601 by default, from strings, `Date` (in UTC) or Temporal values.
 
@@ -102,7 +104,7 @@ Every serializer escapes for its grammar, or throws `FilterSerializeError` for w
 ## Hooks without a component
 
 ```tsx
-const page = useServerPage(tasks, state.request) // items, status, fetching, previous, total, navigation, error, retry
+const page = useServerPage(tasks, state.request) // items, status, fetching, polling, previous, total, navigation, error, retry
 const more = useServerInfinite(tasks, { filter, sort, size: 25 }) // items, loadMore, hasMore, loadingMore
 
 // A resource that isn't paged: a detail, a snapshot, a short list. Same shape, with `data`.
@@ -201,6 +203,26 @@ const editable = defineResource({ key, fetch, refetchOnWindowFocus: false, refet
 
 Never reload a resource whose reads overwrite per-item ETags (or versions) a later write sends back: a read on focus or reconnect during an edit swaps in an ETag for a version the person never saw, and the save that should conflict overwrites it. Turn both off on its `defineResource` (TanStack reloads a query when any reader asks to, so set it where every screen gets it) and write saves back with `settle` or `patch`.
 
+## Polling
+
+`refetchInterval` reloads a query every so many ms while it's shown: on `useServerQuery`, `useServerResource`, `useServerPage` and `useServerInfinite` (a number, `false`, or a function of the hook's state), and as a number on `ServerDataTable` and `ServerList`. Default off, with no timer set.
+
+```ts
+// Ask every 2 s while the login is pending; stop once it isn't.
+const login = useServerQuery([...auth.key, "login", attempt], ({ signal }) => api.loginStatus(attempt, { signal }), {
+  refetchInterval: (state) => (state.data?.status === "pending" ? 2000 : false),
+})
+<ServerList aria-label="Jobs" source={jobs} refetchInterval={10_000} refetchIntervalInBackground {...rest} />
+```
+
+- Don't hand-write a timer that calls `retry` or invalidates: the option never overlaps requests, pauses with the tab, and shares one timer per key.
+- The next poll counts from when the last read settled, so requests never stack; any other read of the query (a mutation's refresh, a patch, `retry`) pushes it back, and a hold pauses it like any read.
+- It stops while the document is hidden (TanStack's `focusManager`, `visibilitychange`) and, visible again, reloads at once when an interval went by. `refetchIntervalInBackground: true` keeps it going.
+- A poll is a background refresh: data stays, `fetching` and `polling` are true, `status` stays `success`. A failed poll follows the retry rules and keeps the last data beside the error; a function can stop on `state.status === "error"`.
+- Hooks that read the same key share one timer at the shortest interval any of them asks for; it stops when the last unmounts or changes key, and a new key starts its own.
+- The table and list don't mark rows busy or say "Loading…" for a poll. With your own status, leave polls out: `fetching={page.fetching && !page.polling}`.
+- A page or infinite list polls its separate total (`fetchTotal`) at the same interval; an infinite list reloads every loaded page.
+
 ## Offline
 
 TanStack's default `networkMode: "online"` pauses reads and writes after the browser's `offline` event: a page stays pending and never reaches its error state. For a local backend (Electron IPC, localhost) or an app with its own offline UI:
@@ -253,7 +275,7 @@ Counts, page sizes and the chips' numbers and dates follow the page's `<html lan
 ## Guarantees to keep
 
 - Never empty while loading or after an error; the previous page's rows stay (`aria-busy`) while the next loads.
-- A polite status says "Showing 21–40 of 312" after each load and "Loading…" only past 400 ms.
+- A polite status says "Showing 21–40 of 312" after each load and "Loading…" only past 400 ms, never for a poll.
 - Focus stays on the control pressed (pagination, Load more); row navigation restarts at the first row without moving focus.
 - Agents: `sortBy`/`setPage` on the table, `filter(field, value)`/`clearFilters()` on the "{label} filters" group, `select(id)` on a list, Load more by name.
 
@@ -272,4 +294,5 @@ Counts, page sizes and the chips' numbers and dates follow the page's `<html lan
 | Query client   | the app's; a shared default, or `DataProvider`                                  |
 | Query defaults | keep previous data, 2 retries except 4xx, `staleTime` 30 s, no refetch on focus |
 | Refetch        | stale queries on mount and reconnect (not with `networkMode: "always"`)         |
+| Polling        | off; `refetchInterval` paused while hidden unless `refetchIntervalInBackground` |
 | Network mode   | TanStack's `online`: paused while the browser is offline                        |
