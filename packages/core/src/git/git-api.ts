@@ -25,7 +25,7 @@ import { gitText, gitTextOrNull } from "./git-read.ts";
 import { listRepos } from "./git-repos.ts";
 import { readStatus } from "./git-status.ts";
 import { repoId, resolveRepo, workspaceRootOf, worktreeRepository } from "./git-workspace.ts";
-import { worktreeChanges } from "./git-worktree.ts";
+import { worktreeAt, listWorktrees, worktreeChanges } from "./git-worktree.ts";
 
 const BRANCH_COMMIT_LIMIT = 200;
 
@@ -84,20 +84,32 @@ export const gitBranches = Effect.fn("GitApi.branches")(function* (
   context: GitApiContext,
   prefix: string,
   repo: string,
+  worktree: string | null,
 ) {
   const { workspace, path } = yield* repoOf(context, prefix, repo);
+  const cwd = yield* worktreeAt(path, worktree);
   const config = yield* loadProjectConfig(context.home, workspace.project.prefix);
-  return yield* listBranches(path, config.defaultBranch);
+  return yield* listBranches(cwd, config.defaultBranch);
 });
 
 export const gitLog = Effect.fn("GitApi.log")(function* (
   context: GitApiContext,
   prefix: string,
   repo: string,
+  worktree: string | null,
   query: LogQuery,
 ) {
   const { path } = yield* repoOf(context, prefix, repo);
-  return yield* commitLog(path, query);
+  return yield* commitLog(yield* worktreeAt(path, worktree), query);
+});
+
+export const gitWorktrees = Effect.fn("GitApi.worktrees")(function* (
+  context: GitApiContext,
+  prefix: string,
+  repo: string,
+) {
+  const { path } = yield* repoOf(context, prefix, repo);
+  return yield* listWorktrees(path);
 });
 
 export const gitCommit = Effect.fn("GitApi.commit")(function* (
@@ -168,6 +180,8 @@ export interface WorktreeQuery {
   readonly project: string | null;
   readonly repo: string | null;
   readonly task: string | null;
+  /** One of the repository's worktrees to read; null for the repository's own checkout. */
+  readonly worktree: string | null;
 }
 
 /** Uncommitted changes of a workspace repository, or of a task attempt's worktree. */
@@ -191,8 +205,9 @@ export const gitWorktree = Effect.fn("GitApi.worktree")(function* (
   if (query.project === null || query.repo === null) {
     return yield* new NfError({ code: "invalid_value", message: "pass project and repo, or task" });
   }
-  const { path } = yield* repoOf(context, query.project, query.repo);
-  return yield* worktreeChanges(query.repo, path);
+  const { workspace, path } = yield* repoOf(context, query.project, query.repo);
+  const worktree = yield* worktreeAt(path, query.worktree);
+  return yield* worktreeChanges(repoId(workspace.root, path), worktree);
 });
 
 const pullRequestOf = Effect.fnUntraced(function* (

@@ -87,7 +87,7 @@ export const GitFileChange = Schema.Struct({
   status: GitFileStatus,
   /** The old path of a rename or copy. */
   from: NullableString,
-  /** Null for binary files. */
+  /** Null when git cannot count the lines: a binary file, or one beyond a capped patch. */
   additions: NullableCount,
   deletions: NullableCount,
 });
@@ -127,6 +127,22 @@ export const GitCompare = Schema.Struct({
 });
 export type GitCompare = typeof GitCompare.Type;
 
+/** One checkout of a repository, as `git worktree list` reports it. */
+export const GitWorktreeEntry = Schema.Struct({
+  /** Its absolute path, `/`-separated. */
+  path: Schema.String,
+  /** Null on a detached HEAD, and for a bare repository. */
+  branch: NullableString,
+  head: NullableString,
+  /** The repository's primary checkout, which git lists first. */
+  main: Schema.Boolean,
+  locked: Schema.Boolean,
+  /** Its folder is gone, or its git dir no longer points at it. */
+  prunable: Schema.Boolean,
+});
+export type GitWorktreeEntry = typeof GitWorktreeEntry.Type;
+export const GitWorktreeList = Schema.Array(GitWorktreeEntry);
+
 export const GitWorktree = Schema.Struct({
   /** The repository's id in the workspace. */
   repo: Schema.String,
@@ -135,7 +151,8 @@ export const GitWorktree = Schema.Struct({
   head: NullableString,
   staged: GitChangeSet,
   unstaged: GitChangeSet,
-  untracked: Schema.Array(Schema.String),
+  /** Untracked files as added files; `untrackedTruncated` when git's list itself was capped. */
+  untracked: GitChangeSet,
   untrackedTruncated: Schema.Boolean,
 });
 export type GitWorktree = typeof GitWorktree.Type;

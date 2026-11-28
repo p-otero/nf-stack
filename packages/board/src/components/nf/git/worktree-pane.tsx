@@ -1,101 +1,66 @@
-import { useState } from "react";
-import type { GitRepo, GitWorktree } from "@nf/contracts";
+import type { GitWorktree } from "@nf/contracts";
 import type { Writable } from "@/contract";
+import { Badge } from "@/components/ui/badge";
 import { GitBranchChip } from "@/components/ui/git-chip";
-import { GitDiff } from "@/components/ui/git-diff";
-import {
-  SegmentedControl,
-  SegmentedControlIndicator,
-  SegmentedControlItem,
-} from "@/components/ui/segmented-control";
-import { repoName, worktreeCounts } from "@/components/nf/git/git-model";
+import { GitDiff, type GitDiffGroup } from "@/components/ui/git-diff";
+import { shortWorktreePath, worktreeCounts } from "@/components/nf/git/git-model";
 
-type WorktreeGroup = "staged" | "unstaged" | "untracked";
-
-function UntrackedFiles({ worktree }: { worktree: Writable<GitWorktree> }) {
-  return (
-    <div className="flex min-h-0 flex-1 flex-col gap-items rounded-surface border bg-card px-inset-item py-inset-item">
-      <p className="text-caption text-muted-foreground">
-        Untracked files have no diff until they are added.
-        {worktree.untrackedTruncated ? " The list stops at the API's limit." : ""}
-      </p>
-      <ul aria-label="Untracked files" className="flex min-h-0 flex-col gap-inline overflow-auto">
-        {worktree.untracked.map((path) => (
-          <li key={path} className="font-mono text-sm">
-            {path}
-          </li>
-        ))}
-      </ul>
-    </div>
-  );
-}
-
-function WorktreePane({
-  repo,
-  worktree,
-  fill,
-}: {
-  repo: Writable<GitRepo>;
-  worktree: Writable<GitWorktree>;
-  fill?: boolean;
-}) {
+function WorktreePane({ worktree, fill }: { worktree: Writable<GitWorktree>; fill?: boolean }) {
   const counts = worktreeCounts(worktree);
-  const sizes: Record<WorktreeGroup, number> = {
-    staged: worktree.staged.files.length,
-    unstaged: worktree.unstaged.files.length,
-    untracked: counts.untracked,
-  };
-  const [group, setGroup] = useState<WorktreeGroup>(
-    sizes.staged > 0 ? "staged" : sizes.unstaged > 0 ? "unstaged" : "untracked",
-  );
+  const groups: GitDiffGroup[] = [
+    { label: "Staged", patch: worktree.staged.patch },
+    { label: "Unstaged", patch: worktree.unstaged.patch },
+    { label: "Untracked", patch: worktree.untracked.patch },
+  ].filter((group) => group.patch !== "");
+  const truncated =
+    worktree.staged.truncated || worktree.unstaged.truncated || worktree.untracked.truncated;
   return (
     <section
       aria-label="Uncommitted changes"
       className="flex min-h-0 min-w-0 flex-1 flex-col gap-items"
     >
-      <header className="flex flex-row flex-wrap items-center gap-inline rounded-surface border bg-card px-inset-item py-inset-item">
-        <span className="flex min-w-0 flex-1 flex-col gap-inline">
-          <span className="text-body font-medium">Uncommitted changes</span>
-          <span className="flex flex-wrap items-center gap-inline text-caption text-muted-foreground">
-            {counts.files} file{counts.files === 1 ? "" : "s"} on{" "}
-            {repo.branch === null ? (
-              <span>detached HEAD</span>
-            ) : (
-              <GitBranchChip name={repo.branch} />
-            )}{" "}
-            in <span className="font-mono">{repoName(repo)}</span> · read-only
-            {worktree.head === null ? null : (
-              <>
-                {" · at "}
-                <span className="font-mono">{worktree.head.slice(0, 7)}</span>
-              </>
-            )}
+      <header className="flex flex-col gap-inline rounded-surface border bg-card px-inset-item py-inset-item">
+        <div className="flex items-start gap-items">
+          <span className="flex min-w-0 flex-1 flex-col gap-inline">
+            <span className="text-body font-medium">Uncommitted changes</span>
+            <span className="flex flex-wrap items-center gap-inline text-caption text-muted-foreground">
+              {counts.files} file{counts.files === 1 ? "" : "s"} on{" "}
+              {worktree.branch === null ? (
+                <span>detached HEAD</span>
+              ) : (
+                <GitBranchChip name={worktree.branch} />
+              )}{" "}
+              in <span className="font-mono">{shortWorktreePath(worktree.path)}</span> · read-only
+              {worktree.head === null ? null : (
+                <>
+                  {" · at "}
+                  <span className="font-mono">{worktree.head.slice(0, 7)}</span>
+                </>
+              )}
+            </span>
+            <span className="flex flex-wrap items-center gap-inline text-caption text-muted-foreground tabular-nums">
+              <span>{worktree.staged.files.length} staged</span>
+              <span aria-hidden="true">·</span>
+              <span>{worktree.unstaged.files.length} unstaged</span>
+              <span aria-hidden="true">·</span>
+              <span>{worktree.untracked.files.length} untracked</span>
+              {worktree.untrackedTruncated ? (
+                <span>· the untracked list stops at the API's limit</span>
+              ) : null}
+            </span>
           </span>
-        </span>
-        <SegmentedControl<WorktreeGroup>
-          aria-label="Which changes"
-          value={group}
-          onValueChange={(next) => {
-            if (next) setGroup(next);
-          }}
-        >
-          <SegmentedControlIndicator />
-          <SegmentedControlItem value="staged">Staged · {sizes.staged}</SegmentedControlItem>
-          <SegmentedControlItem value="unstaged">Unstaged · {sizes.unstaged}</SegmentedControlItem>
-          {sizes.untracked > 0 ? (
-            <SegmentedControlItem value="untracked">
-              Untracked · {sizes.untracked}
-            </SegmentedControlItem>
-          ) : null}
-        </SegmentedControl>
+          {truncated ? <Badge tone="warning">patch truncated</Badge> : null}
+        </div>
       </header>
-      {group === "untracked" ? (
-        <UntrackedFiles worktree={worktree} />
+      {groups.length === 0 ? (
+        <p className="flex flex-1 items-center justify-center rounded-surface border px-inset-item text-caption text-muted-foreground">
+          Git returned no patch for these changes.
+        </p>
       ) : (
         <GitDiff
-          key={group}
-          aria-label={group === "staged" ? "Staged changes" : "Unstaged changes"}
-          patch={worktree[group].patch}
+          key={worktree.path}
+          aria-label="Uncommitted changes"
+          groups={groups}
           fileTree="collapsible"
           height={fill === false ? "auto" : undefined}
           /*

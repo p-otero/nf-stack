@@ -1,4 +1,11 @@
-import type { GitBranch, GitCommitDetail, GitLogPage, GitRepo, GitWorktree } from "@nf/contracts";
+import type {
+  GitBranch,
+  GitCommitDetail,
+  GitLogPage,
+  GitRepo,
+  GitWorktree,
+  GitWorktreeEntry,
+} from "@nf/contracts";
 import type { Writable } from "@/contract";
 
 export const gitApiBase = (api: string): string =>
@@ -19,12 +26,20 @@ const isCommit = (value: unknown): boolean =>
 const isChangeSet = (value: unknown): boolean =>
   isRecord(value) && Array.isArray(value["files"]) && typeof value["patch"] === "string";
 
+const isWorktreeEntry = (value: unknown): boolean =>
+  isRecord(value) &&
+  typeof value["path"] === "string" &&
+  (value["branch"] === null || typeof value["branch"] === "string") &&
+  typeof value["main"] === "boolean" &&
+  typeof value["locked"] === "boolean" &&
+  typeof value["prunable"] === "boolean";
+
 const errorMessage = (body: unknown): string | null =>
   isRecord(body) && typeof body["error"] === "string" ? body["error"] : null;
 
 const href = (
   base: string,
-  route: "repos" | "branches" | "log" | "commit" | "worktree",
+  route: "repos" | "worktrees" | "branches" | "log" | "commit" | "worktree",
   project: string,
   params: Record<string, string | null | undefined>,
 ): string => {
@@ -66,26 +81,41 @@ const isCommitDetail = (value: unknown): value is Writable<GitCommitDetail> =>
   isRecord(value) && isCommit(value["commit"]) && typeof value["patch"] === "string";
 
 const isWorktree = (value: unknown): value is Writable<GitWorktree> =>
-  isRecord(value) && isChangeSet(value["staged"]) && isChangeSet(value["unstaged"]);
+  isRecord(value) &&
+  isChangeSet(value["staged"]) &&
+  isChangeSet(value["unstaged"]) &&
+  isChangeSet(value["untracked"]);
+
+const isWorktreeList = (value: unknown): value is Writable<GitWorktreeEntry>[] =>
+  Array.isArray(value) && value.every(isWorktreeEntry);
 
 export const readGitRepos = (base: string, project: string): Promise<Writable<GitRepo>[]> =>
   readGit(href(base, "repos", project, {}), isRepoList, "the repositories");
+
+export const readGitWorktrees = (
+  base: string,
+  project: string,
+  repo: string,
+): Promise<Writable<GitWorktreeEntry>[]> =>
+  readGit(href(base, "worktrees", project, { repo }), isWorktreeList, "the worktrees");
 
 export const readGitBranches = (
   base: string,
   project: string,
   repo: string,
+  worktree: string | null,
 ): Promise<Writable<GitBranch>[]> =>
-  readGit(href(base, "branches", project, { repo }), isBranchList, "the branches");
+  readGit(href(base, "branches", project, { repo, worktree }), isBranchList, "the branches");
 
 export const readGitLog = (
   base: string,
   project: string,
   repo: string,
+  worktree: string | null,
   branch: string | null,
   cursor: string | null,
 ): Promise<Writable<GitLogPage>> =>
-  readGit(href(base, "log", project, { repo, branch, cursor }), isLogPage, "the history");
+  readGit(href(base, "log", project, { repo, worktree, branch, cursor }), isLogPage, "the history");
 
 export const readGitCommit = (
   base: string,
@@ -99,5 +129,6 @@ export const readGitWorktree = (
   base: string,
   project: string,
   repo: string,
+  worktree: string | null,
 ): Promise<Writable<GitWorktree>> =>
-  readGit(href(base, "worktree", project, { repo }), isWorktree, "the working tree");
+  readGit(href(base, "worktree", project, { repo, worktree }), isWorktree, "the working tree");

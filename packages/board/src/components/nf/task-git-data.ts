@@ -68,8 +68,7 @@ const isWorktree = (value: unknown): value is GitWorktree =>
   typeof value["repo"] === "string" &&
   isChangeSet(value["staged"]) &&
   isChangeSet(value["unstaged"]) &&
-  Array.isArray(value["untracked"]) &&
-  value["untracked"].every((path) => typeof path === "string") &&
+  isChangeSet(value["untracked"]) &&
   typeof value["untrackedTruncated"] === "boolean";
 
 export const branchHistoryHref = (
@@ -78,7 +77,12 @@ export const branchHistoryHref = (
 ): string => {
   const url = new URL(current);
   url.searchParams.set("project", projectOfTask(branch.task));
-  return boardViewHref(url.href, "git", { repo: branch.repo, branch: branch.name, commit: null });
+  return boardViewHref(url.href, "git", {
+    repo: branch.repo,
+    branch: branch.name,
+    commit: null,
+    worktree: null,
+  });
 };
 
 export const readTaskBranch = async (task: string): Promise<TaskBranch | null> => {
@@ -174,15 +178,16 @@ export type WorktreeChanges = {
 };
 
 export const toWorktreeChanges = (worktree: GitWorktree): WorktreeChanges => {
+  const untracked = worktree.untracked.files.map((file) => file.path);
   const paths = new Set([
     ...worktree.staged.files.map((file) => file.path),
     ...worktree.unstaged.files.map((file) => file.path),
-    ...worktree.untracked,
+    ...untracked,
   ]);
   return {
     staged: toPatchSet(worktree.staged),
     unstaged: toPatchSet(worktree.unstaged),
-    untracked: worktree.untracked,
+    untracked,
     uncommitted: paths.size,
     moreUntracked: worktree.untrackedTruncated,
   };

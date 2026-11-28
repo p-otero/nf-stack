@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
 
-import type { GitBranch, GitCommit, GitRepo, GitWorktree } from "@nf/contracts";
+import type { GitBranch, GitCommit, GitRepo, GitWorktree, GitWorktreeEntry } from "@nf/contracts";
 import type { Writable } from "@/contract";
 
 import {
@@ -11,11 +11,14 @@ import {
   parseGitTabLocation,
   toHistoryCommits,
   repoName,
+  shortWorktreePath,
   toRepository,
   toTreeFiles,
   upstreamHeadOf,
   withoutGitLocation,
+  worktreeBranchLabel,
   worktreeCounts,
+  worktreeOf,
 } from "./git-model";
 
 const commit = (overrides: Partial<Writable<GitCommit>> = {}): Writable<GitCommit> => ({
@@ -40,8 +43,20 @@ const worktree = (overrides: Partial<Writable<GitWorktree>> = {}): Writable<GitW
   head: "f".repeat(40),
   staged: { files: [], patch: "", truncated: false },
   unstaged: { files: [], patch: "", truncated: false },
-  untracked: [],
+  untracked: { files: [], patch: "", truncated: false },
   untrackedTruncated: false,
+  ...overrides,
+});
+
+const worktreeEntry = (
+  overrides: Partial<Writable<GitWorktreeEntry>> = {},
+): Writable<GitWorktreeEntry> => ({
+  path: "C:/work/ledger",
+  branch: "main",
+  head: "f".repeat(40),
+  main: true,
+  locked: false,
+  prunable: false,
   ...overrides,
 });
 
@@ -74,20 +89,31 @@ const branch = (name: string, current: boolean): Writable<GitBranch> => ({
 
 describe("git tab routing", () => {
   test("reads the repository, branch and commit from the page's URL", () => {
-    expect(parseGitTabLocation("?view=git&repo=api&branch=main&commit=9be07d2")).toEqual({
+    expect(
+      parseGitTabLocation(
+        "?view=git&repo=api&branch=main&commit=9be07d2&worktree=C%3A%2Fwork%2Fledger%2Ffeat",
+      ),
+    ).toEqual({
       repo: "api",
       branch: "main",
       commit: "9be07d2",
+      worktree: "C:/work/ledger/feat",
     });
   });
 
   test("an absent or empty parameter is no choice at all", () => {
-    expect(parseGitTabLocation("?view=git&repo=&branch=")).toEqual({
+    expect(parseGitTabLocation("?view=git&repo=&branch=&worktree=")).toEqual({
       repo: null,
       branch: null,
       commit: null,
+      worktree: null,
     });
-    expect(parseGitTabLocation("")).toEqual({ repo: null, branch: null, commit: null });
+    expect(parseGitTabLocation("")).toEqual({
+      repo: null,
+      branch: null,
+      commit: null,
+      worktree: null,
+    });
   });
 
   test("the view is the Tasks board unless the URL names another", () => {
@@ -103,14 +129,15 @@ describe("git tab routing", () => {
         repo: "api",
         branch: null,
         commit: "9be07d2",
+        worktree: "C:/work/ledger/feat",
       }),
-    ).toBe("/?project=NF&view=git&repo=api&commit=9be07d2");
+    ).toBe("/?project=NF&view=git&repo=api&commit=9be07d2&worktree=C%3A%2Fwork%2Fledger%2Ffeat");
   });
 
   test("a project change drops the Git place but keeps the project and the view", () => {
     expect(
       withoutGitLocation(
-        "http://127.0.0.1:4646/?project=B&view=git&repo=api&branch=feat&commit=abc",
+        "http://127.0.0.1:4646/?project=B&view=git&repo=api&branch=feat&commit=abc&worktree=%2Fw%2Fx",
       ),
     ).toBe("/?project=B&view=git");
   });
@@ -119,7 +146,7 @@ describe("git tab routing", () => {
     const href = boardViewHref(
       "http://localhost:4646/?project=NF&view=git&repo=api&branch=main&commit=9be07d2",
       "telemetry",
-      { repo: "api", branch: "main", commit: null },
+      { repo: "api", branch: "main", commit: null, worktree: null },
     );
     expect(href).toBe("/?project=NF&view=telemetry");
     expect(
@@ -127,6 +154,7 @@ describe("git tab routing", () => {
         repo: null,
         branch: null,
         commit: null,
+        worktree: null,
       }),
     ).toBe("/?project=NF");
   });
@@ -222,16 +250,41 @@ describe("git tab model", () => {
         worktree({
           staged: changeSet(["a.ts", "b.ts"]),
           unstaged: changeSet(["a.ts", "c.ts"]),
-          untracked: ["new.ts"],
+          untracked: changeSet(["new.ts"]),
         }),
       ),
     ).toEqual({ staged: 2, unstaged: 3, untracked: 1, files: 4 });
-    expect(worktreeCounts(worktree({ untracked: ["x.md", "y.md"] }))).toEqual({
+    expect(worktreeCounts(worktree({ untracked: changeSet(["x.md", "y.md"]) }))).toEqual({
       staged: 0,
       unstaged: 2,
       untracked: 2,
       files: 2,
     });
+  });
+
+  test("a worktree reads as its branch, or the commit it is detached at", () => {
+    expect(worktreeBranchLabel(worktreeEntry())).toBe("main");
+    expect(worktreeBranchLabel(worktreeEntry({ branch: null, head: "abc1234def" }))).toBe(
+      "Detached at abc1234",
+    );
+    expect(worktreeBranchLabel(worktreeEntry({ branch: null, head: null }))).toBe("Detached HEAD");
+    expect(shortWorktreePath("C:/work/ledger/worktrees/feat-git")).toBe("…/worktrees/feat-git");
+    expect(shortWorktreePath("/w/ledger")).toBe("w/ledger");
+  });
+
+  test("the URL's worktree is the one picked, or the repository's own when it is gone", () => {
+    const main = worktreeEntry();
+    const feature = worktreeEntry({ path: "/w/ledger-feat", branch: "feat/git", main: false });
+    const pruned = worktreeEntry({
+      path: "/w/ledger-gone",
+      branch: "feat/gone",
+      main: false,
+      prunable: true,
+    });
+    expect(worktreeOf([main, feature], feature.path)).toEqual(feature);
+    expect(worktreeOf([main, feature], null)).toEqual(main);
+    expect(worktreeOf([main, feature], "/w/elsewhere")).toEqual(main);
+    expect(worktreeOf([main, pruned], pruned.path)).toEqual(main);
   });
 
   test("the upstream's commit is the one git decorates with its name", () => {

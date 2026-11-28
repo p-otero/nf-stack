@@ -608,10 +608,13 @@ for anything else. The page's project selector switches project (or shows all of
 the choice in the URL with `history.replaceState`, without a reload.
 
 The Git tab and a task's Changes section read git through the same server, from read-only
-`GET /api/git/{repos,branches,log,commit,compare,worktree}?project=<PREFIX>` and
+`GET /api/git/{repos,worktrees,branches,log,commit,compare,worktree}?project=<PREFIX>` and
 `GET /api/tasks/<KEY>/branch` routes that answer from the project's workspace folder and refuse
-a path outside it. A snapshot has no git at all: no Git tab, and its task dialog says it has no
-branch data.
+a path outside it. The Git tab picks a repository and, when it has more than one, one of its
+worktrees: the branch, its history and its uncommitted changes (staged, unstaged and untracked,
+in the same tree and diff viewer as a commit) follow that checkout, and the worktree travels in the
+URL with the repository, branch and commit. A snapshot has no git at all: no Git tab, and its task
+dialog says it has no branch data.
 
 ## Releasing
 

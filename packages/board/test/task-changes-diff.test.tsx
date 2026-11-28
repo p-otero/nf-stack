@@ -60,7 +60,7 @@ const truncatedWorktree: GitWorktree = {
     patch: "diff --git a/src/dispatch.ts b/src/dispatch.ts\n@@ -1 +1 @@\n-a\n+b\n",
     truncated: true,
   },
-  untracked: [],
+  untracked: { files: [], patch: "", truncated: false },
   untrackedTruncated: false,
 };
 

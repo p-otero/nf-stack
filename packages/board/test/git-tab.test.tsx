@@ -1,6 +1,13 @@
 import { afterAll, afterEach, beforeAll, describe, expect, test } from "bun:test";
 import { GlobalRegistrator } from "@happy-dom/global-registrator";
-import type { GitCommit, GitCommitDetail, GitLogPage, GitRepo, GitWorktree } from "@nf/contracts";
+import type {
+  GitCommit,
+  GitCommitDetail,
+  GitLogPage,
+  GitRepo,
+  GitWorktree,
+  GitWorktreeEntry,
+} from "@nf/contracts";
 import type { Writable } from "@/contract";
 import type { GitTabLocation } from "@/components/nf/git/git-tab";
 
@@ -85,7 +92,7 @@ const worktree = (overrides: Partial<Writable<GitWorktree>> = {}): Writable<GitW
   head: HEAD,
   staged: emptySet,
   unstaged: emptySet,
-  untracked: [],
+  untracked: emptySet,
   untrackedTruncated: false,
   ...overrides,
 });
@@ -111,8 +118,29 @@ const serve = (routes: Routes) => {
   Object.assign(globalThis, { fetch: answer });
 };
 
+const worktreeEntry = (
+  overrides: Partial<Writable<GitWorktreeEntry>> = {},
+): Writable<GitWorktreeEntry> => ({
+  path: "C:/work/ledger",
+  branch: "main",
+  head: HEAD,
+  main: true,
+  locked: false,
+  prunable: false,
+  ...overrides,
+});
+
+const LINKED = "C:/work/ledger-feat";
+
+const twoWorktrees = () =>
+  ok([
+    worktreeEntry(),
+    worktreeEntry({ path: LINKED, branch: "feat/git-review", main: false }),
+  ]);
+
 const baseRoutes = (overrides: Routes = {}): Routes => ({
   repos: () => ok([repo()]),
+  worktrees: () => ok([]),
   branches: () => ok([]),
   log: () => ok(LOG),
   commit: (params) => ok(detail(params.get("sha") ?? HEAD)),
@@ -128,7 +156,7 @@ const renderTab = (location: Partial<GitTabLocation> = {}) => {
         api="http://localhost/api/board"
         project="LGD"
         timeZone="UTC"
-        location={{ repo: null, branch: null, commit: null, ...location }}
+        location={{ repo: null, branch: null, commit: null, worktree: null, ...location }}
         onLocationChange={(next) => changes.push(next)}
       />
     </QueryClientProvider>,
@@ -189,6 +217,7 @@ const projectLogs: Record<string, Writable<GitLogPage>> = {
 
 const projectRoutes = (reposOf: (project: string) => Writable<GitRepo>[]): Routes => ({
   repos: (params) => ok(reposOf(params.get("project") ?? "")),
+  worktrees: () => ok([]),
   branches: () => ok([]),
   log: (params) => {
     const log = projectLogs[`${params.get("project") ?? ""}·${params.get("branch") ?? ""}`];
@@ -240,7 +269,19 @@ describe("git tab", () => {
             : ok(
                 worktree({
                   unstaged: { files: [], patch: "", truncated: false },
-                  untracked: ["notes.txt"],
+                  untracked: {
+                    files: [
+                      {
+                        path: "notes.txt",
+                        status: "added",
+                        from: null,
+                        additions: 1,
+                        deletions: 0,
+                      },
+                    ],
+                    patch: "diff --git a/notes.txt b/notes.txt\nnew file mode 100644\n",
+                    truncated: false,
+                  },
                 }),
               ),
       }),
@@ -267,26 +308,197 @@ describe("git tab", () => {
     expect(within(alert).getByRole("button", { name: "Retry" })).toBeDefined();
   });
 
-  test("a checkout with only untracked files gets the uncommitted row and lists them", async () => {
+  test("a checkout with only untracked files gets the uncommitted row and their diff", async () => {
     serve(
       baseRoutes({
         repos: () => ok([repo({ dirty: true, uncommitted: 2 })]),
-        worktree: () => ok(worktree({ untracked: ["notes.txt", "src/new.ts"] })),
+        worktree: () =>
+          ok(
+            worktree({
+              untracked: {
+                files: [
+                  { path: "notes.txt", status: "added", from: null, additions: 1, deletions: 0 },
+                  { path: "src/new.ts", status: "added", from: null, additions: 2, deletions: 0 },
+                ],
+                patch: [
+                  "diff --git a/notes.txt b/notes.txt",
+                  "new file mode 100644",
+                  "--- /dev/null",
+                  "+++ b/notes.txt",
+                  "@@ -0,0 +1 @@",
+                  "+note",
+                  "diff --git a/src/new.ts b/src/new.ts",
+                  "new file mode 100644",
+                  "--- /dev/null",
+                  "+++ b/src/new.ts",
+                  "@@ -0,0 +1,2 @@",
+                  "+a",
+                  "+b",
+                  "",
+                ].join("\n"),
+                truncated: false,
+              },
+            }),
+          ),
       }),
     );
     renderTab();
     const pane = await screen.findByRole("region", { name: "Uncommitted changes" });
     expect(pane.textContent).toContain("2 files");
-    expect(pane.textContent).toContain("Untracked · 2");
-    expect(pane.textContent).toContain("no diff until they are added");
-    const list = within(pane).getByRole("list", { name: "Untracked files" });
-    expect(
-      within(list)
-        .getAllByRole("listitem")
-        .map((item) => item.textContent),
-    ).toEqual(["notes.txt", "src/new.ts"]);
+    expect(pane.textContent).toContain("0 staged");
+    expect(pane.textContent).toContain("2 untracked");
+    const diff = within(pane).getByRole("group", { name: "Uncommitted changes" });
+    expect(diff.textContent).toContain("notes.txt");
+    expect(diff.textContent).toContain("src/new.ts");
+    expect(diff.textContent).toContain("Untracked");
     const history = screen.getByRole("region", { name: "History of services/api" });
     expect(history.textContent).toContain("Uncommitted changes");
+  });
+
+  test("the worktree picker offers every worktree and reports the one chosen", async () => {
+    serve(baseRoutes({ worktrees: twoWorktrees }));
+    const changes = renderTab();
+    await screen.findByRole("region", { name: "History of services/api" });
+    const trigger = screen.getByRole("combobox", { name: "Worktree" });
+    expect(trigger.textContent).toContain("main");
+    fireEvent.pointerDown(trigger, { pointerType: "mouse", button: 0 });
+    fireEvent.pointerUp(trigger, { pointerType: "mouse", button: 0 });
+    fireEvent.click(trigger);
+    const [own] = await screen.findAllByRole("option");
+    expect(own?.textContent).toContain("…/work/ledger");
+    expect(own?.textContent).toContain("main worktree");
+    const option = await screen.findByRole("option", { name: /feat\/git-review/ });
+    expect(option.textContent).toContain("…/work/ledger-feat");
+    fireEvent.click(option);
+    expect(changes).toEqual([
+      { repo: "services/api", branch: null, commit: null, worktree: LINKED },
+    ]);
+  });
+
+  test("choosing another repository drops the chosen worktree", async () => {
+    serve(
+      baseRoutes({
+        worktrees: twoWorktrees,
+        repos: () => ok([repo(), repo({ id: "web", path: "C:/work/ledger/web" })]),
+        worktree: () => ok(worktree({ path: LINKED, branch: "feat/git-review" })),
+      }),
+    );
+    const changes = renderTab({ repo: "services/api", worktree: LINKED });
+    await screen.findByRole("region", { name: "History of services/api" });
+    const trigger = screen.getByRole("combobox", { name: "Repository" });
+    fireEvent.pointerDown(trigger, { pointerType: "mouse", button: 0 });
+    fireEvent.pointerUp(trigger, { pointerType: "mouse", button: 0 });
+    fireEvent.click(trigger);
+    fireEvent.click(await screen.findByRole("option", { name: /web/ }));
+    expect(changes).toEqual([{ repo: "web", branch: null, commit: null, worktree: null }]);
+  });
+
+  test("a chosen worktree reads its own branch, history and uncommitted changes", async () => {
+    const featureHead = "c".repeat(40);
+    serve(
+      baseRoutes({
+        worktrees: () =>
+          ok([
+            worktreeEntry(),
+            worktreeEntry({ path: LINKED, branch: "feat/git-review", head: featureHead, main: false }),
+          ]),
+        log: () =>
+          ok({
+            commits: [commit(featureHead, "Review the board from a worktree", ["d".repeat(40)])],
+            total: 1,
+            next: null,
+          } satisfies Writable<GitLogPage>),
+        worktree: () =>
+          ok(
+            worktree({
+              path: LINKED,
+              branch: "feat/git-review",
+              head: featureHead,
+              staged: {
+                files: [
+                  { path: "src/api.ts", status: "modified", from: null, additions: 1, deletions: 1 },
+                ],
+                patch: `diff --git a/src/api.ts b/src/api.ts
+--- a/src/api.ts
++++ b/src/api.ts
+@@ -1 +1 @@
+-old
++new
+`,
+                truncated: false,
+              },
+              unstaged: {
+                files: [
+                  { path: "src/api.ts", status: "modified", from: null, additions: 1, deletions: 0 },
+                  {
+                    path: "src/status.ts",
+                    status: "deleted",
+                    from: null,
+                    additions: 0,
+                    deletions: 2,
+                  },
+                ],
+                patch: `diff --git a/src/api.ts b/src/api.ts
+--- a/src/api.ts
++++ b/src/api.ts
+@@ -1 +1,2 @@
+ new
++more
+diff --git a/src/status.ts b/src/status.ts
+deleted file mode 100644
+--- a/src/status.ts
++++ /dev/null
+@@ -1,2 +0,0 @@
+-a
+-b
+`,
+                truncated: false,
+              },
+              untracked: {
+                files: [
+                  {
+                    path: "notes/todo.md",
+                    status: "added",
+                    from: null,
+                    additions: 1,
+                    deletions: 0,
+                  },
+                ],
+                patch: `diff --git a/notes/todo.md b/notes/todo.md
+new file mode 100644
+--- /dev/null
++++ b/notes/todo.md
+@@ -0,0 +1 @@
++later
+`,
+                truncated: false,
+              },
+            }),
+          ),
+      }),
+    );
+    renderTab({ worktree: LINKED });
+    const pane = await screen.findByRole("region", { name: "Uncommitted changes" });
+    expect(pane.textContent).toContain("feat/git-review");
+    expect(pane.textContent).toContain("…/work/ledger-feat");
+    expect(pane.textContent).toContain("3 files");
+    expect(pane.textContent).toContain("1 staged");
+    expect(pane.textContent).toContain("2 unstaged");
+    expect(pane.textContent).toContain("1 untracked");
+    const diff = within(pane).getByRole("group", { name: "Uncommitted changes" });
+    for (const label of ["Staged", "Unstaged"]) expect(diff.textContent).toContain(label);
+    for (const label of ["Staged", "Unstaged", "Untracked"])
+      expect(pane.textContent).toContain(label);
+    for (const path of ["src/api.ts", "src/status.ts"]) expect(diff.textContent).toContain(path);
+    expect(screen.getByRole("region", { name: "History of services/api" }).textContent).toContain(
+      "Review the board from a worktree",
+    );
+    const encoded = encodeURIComponent(LINKED);
+    expect(requests).toContain(`worktree?project=LGD&repo=services%2Fapi&worktree=${encoded}`);
+    expect(requests).toContain(
+      `log?project=LGD&repo=services%2Fapi&worktree=${encoded}&branch=feat%2Fgit-review`,
+    );
+    expect(requests).toContain(`branches?project=LGD&repo=services%2Fapi&worktree=${encoded}`);
   });
 
   test("HEAD opens preselected, and a row press selects another commit", async () => {
