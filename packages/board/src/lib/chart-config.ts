@@ -22,7 +22,7 @@ interface ChartFormatOptions {
 }
 
 const seriesKeyPattern = /^[\w-]+$/
-// Colors are written into a <style> element, so a value that could end the declaration or the element is dropped.
+// Security: colors are written into a <style> element, so a value that could end the declaration is dropped.
 const unsafeColor = /[;{}<>\\]/
 
 function chartColorDeclarations(config: ChartConfig, mode: keyof ChartSeriesTheme) {
@@ -53,7 +53,6 @@ function formatChartValue(value: unknown, { locale, format }: ChartFormatOptions
 
 type ChartPayloadItem = { dataKey?: unknown; name?: unknown; payload?: unknown }
 
-// A pie's payload names its series in a data field (nameKey), so that field's value is the config key.
 function resolveChartSeries(config: ChartConfig, item: ChartPayloadItem | undefined, key: string) {
   const own = item as Record<string, unknown> | undefined
   const payload = item?.payload
@@ -64,7 +63,7 @@ function resolveChartSeries(config: ChartConfig, item: ChartPayloadItem | undefi
   return { key: configKey, series: config[configKey] ?? config[key] }
 }
 
-// A series filled with an SVG pattern reports url(#id), which a CSS background can't paint, so its swatch uses the series color.
+// Spec: a series filled with an SVG pattern reports url(#id), which a CSS background can't paint.
 function chartSwatchColor(config: ChartConfig, key: string, color: string | undefined) {
   if (color && !color.startsWith("url(")) return color
   const series = config[key]

@@ -12,7 +12,6 @@ import { createContext, use, useState, type ComponentProps, type PointerEvent } 
 import { cnState } from "@/lib/utils"
 import { assumeType } from "@/lib/narrow"
 
-// Set only while activateOnPress is on: the controller an item checks through on pointerdown.
 const SegmentedControlPressContext = createContext<SegmentedControlController | null>(null)
 
 type SegmentedControlProps<T extends string = string> = ComponentProps<typeof SegmentedControlPrimitive<T>> & {
@@ -32,7 +31,7 @@ function SegmentedControl<T extends string = string>({
 }: SegmentedControlProps<T>) {
   const [ownController] = useState(() => createSegmentedControlController<T>())
   const active = controller ?? ownController
-  // UI SDK types an item's `value` as a string, so the items below check through a controller of strings; each of
+  // Workaround: UI SDK types an item's `value` as a string, so the items below check through a controller of strings; each of
   // them passes its own value, one of this control's `T`.
   const pressController = activateOnPress ? assumeType<SegmentedControlController>(active) : null
   return (
@@ -40,7 +39,7 @@ function SegmentedControl<T extends string = string>({
       <SegmentedControlPrimitive<T>
         controller={active}
         className={cnState(
-          "relative isolate inline-flex w-fit rounded-control border bg-muted/(--glass-opacity) p-control-inset data-disabled:opacity-50 data-[orientation=horizontal]:h-control data-[orientation=vertical]:flex-col",
+          "relative isolate inline-flex w-fit rounded-control border border-control-track-edge bg-muted/(--glass-opacity) p-control-inset glass-control data-disabled:opacity-50 data-[orientation=horizontal]:h-control data-[orientation=vertical]:flex-col",
           className,
         )}
         {...props}
@@ -49,13 +48,13 @@ function SegmentedControl<T extends string = string>({
   )
 }
 
-// The indicator is the checked state, so it takes the primary fill: muted against background is far below 3:1.
+// Spec: the indicator is the checked state, and muted against background is far below 3:1 (WCAG 1.4.11).
 function SegmentedControlIndicator({ className, ...props }: ComponentProps<typeof SegmentedControlIndicatorPrimitive>) {
   return (
     <SegmentedControlIndicatorPrimitive
       className={cnState(
         // oxlint-disable-next-line shadcn/no-arbitrary-values -- transitions only the properties that move; transition-all also eased every colour and shadow change
-        "absolute top-(--segmented-control-indicator-top) left-(--segmented-control-indicator-left) -z-10 h-(--segmented-control-indicator-height) w-(--segmented-control-indicator-width) rounded-control bg-primary shadow-sm transition-[top,left,width,height] duration-panel ease-standard motion-reduce:transition-none",
+        "absolute top-(--segmented-control-indicator-top) left-(--segmented-control-indicator-left) -z-10 h-(--segmented-control-indicator-height) w-(--segmented-control-indicator-width) rounded-control bg-primary shadow-sm glass-control transition-[top,left,width,height] duration-panel ease-standard motion-reduce:transition-none",
         className,
       )}
       {...props}
@@ -69,8 +68,7 @@ function SegmentedControlItem({
   ...props
 }: ComponentProps<typeof SegmentedControlItemPrimitive>) {
   const pressController = use(SegmentedControlPressContext)
-  // Checking on press is allowed by WCAG 2.5.2 (Pointer Cancellation) because it's reversible: pressing another
-  // item undoes it. It goes through the controller, so onValueChange, cancel(), disabled and read-only still apply.
+  // Spec: checking on press is allowed by WCAG 2.5.2 (Pointer Cancellation) because pressing another item undoes it.
   const checkOnPress = (event: PointerEvent<HTMLButtonElement>) => {
     onPointerDown?.(event)
     if (!pressController || event.defaultPrevented || event.button !== 0 || event.pointerType === "touch") return

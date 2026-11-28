@@ -54,8 +54,7 @@ function stepOf(event: KeyboardEvent, el: HTMLElement): Step | undefined {
   if (event.key === "Home") return mod ? { rows: "first", col: "first" } : { rows: 0, col: "first" }
   if (event.key === "End") return mod ? { rows: "last", col: "last" } : { rows: 0, col: "last" }
   if (mod) return undefined
-  // Left and Right follow the text direction.
-  const forward = getComputedStyle(el).direction === "rtl" ? -1 : 1
+  const rightStep = getComputedStyle(el).direction === "rtl" ? -1 : 1
   switch (event.key) {
     case "ArrowDown":
     case "j":
@@ -64,9 +63,9 @@ function stepOf(event: KeyboardEvent, el: HTMLElement): Step | undefined {
     case "k":
       return { rows: -1, col: "keep" }
     case "ArrowRight":
-      return { rows: 0, col: forward }
+      return { rows: 0, col: rightStep }
     case "ArrowLeft":
-      return { rows: 0, col: -forward }
+      return { rows: 0, col: -rightStep }
     case "PageDown":
       return { rows: rowsPerPage(el), col: "keep" }
     case "PageUp":
@@ -175,8 +174,8 @@ const listGrid = definePrimitive({
           const to = context.store.get().active
           if (!context.store.get().selectable || to === null || to === key) return
           const target = parseCell(to)
-          // Selection follows focus in the primary column only: moving through actions never selects.
-          if (target.col === 0 && target.id !== parseCell(key).id) {
+          const reachedAnotherRowsPrimaryCell = target.col === 0 && target.id !== parseCell(key).id
+          if (reachedAnotherRowsPrimaryCell) {
             setValue(target.id, { reason: "list-navigation", event })
           }
           return
@@ -198,7 +197,6 @@ const listGrid = definePrimitive({
     row: slot<{ value: string }>({
       props: { value: "string" },
       selects: selects({ value: ({ key }) => [key] }),
-      // Not selectable, the row keeps the `data-selected` its item gives it for the open row.
       role: "row",
       attrs: (state, { key }) =>
         state.selectable
@@ -221,8 +219,7 @@ const listGrid = definePrimitive({
         "j",
         "k",
       ],
-      // Only the cell losing the stop and the one taking it hear a move; while nothing is active every cell may
-      // claim it, so all hear `null`.
+      // Perf: a move re-renders only the cell losing the stop and the one taking it; every cell hears `null`.
       selects: selects({ active: ({ key }) => [key, null] }),
       attrs: (state, part) => ({
         tabindex: part.api.roving.tabIndex(state, part),

@@ -50,7 +50,6 @@ const taskLinkLabels: TaskLinkLabels = {
   state: { draft: "Draft", open: "Open", merged: "Merged", closed: "Closed" },
 }
 
-/** A handler takes over the click, as `onOpenThread` does; without one the link navigates. */
 function openWith(link: TaskLink, onOpenLink?: (link: TaskLink) => void) {
   if (!onOpenLink) return undefined
   return (event: MouseEvent) => {

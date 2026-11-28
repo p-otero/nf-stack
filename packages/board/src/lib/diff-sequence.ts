@@ -8,13 +8,14 @@ type SequenceDiff = {
   match: (a: Int32Array, b: Int32Array, algorithm?: SequenceAlgorithm, maxCost?: number) => Int32Array
 }
 
+// oxlint-disable unicorn/consistent-function-scoping -- a Web Worker runs the factory below from its source, so every helper lives inside it
 /**
  * The sequence diff, written as one self-contained function so a Web Worker can be built from its source
  * (`String(createSequenceDiff)`): it must not reference anything outside its body.
  */
 function createSequenceDiff(): SequenceDiff {
   const FAR = 0x7f_ff_ff_ff
-  // Histogram ignores lines this common as anchors, like git: a brace or blank line says nothing about alignment.
+  // Spec: git's histogram ignores lines this common as anchors.
   const MAX_CHAIN = 64
   const scratch = { fd: new Int32Array(0), bd: new Int32Array(0) }
 
@@ -23,8 +24,8 @@ function createSequenceDiff(): SequenceDiff {
     return Math.max(1024, Math.floor(Math.sqrt(n + m)) * 16)
   }
 
-  // Linear-space Myers (the middle-snake split of "An O(ND) Difference Algorithm", as GNU diff writes it), with
-  // its cost cut: past `tooExpensive` edit steps it takes the furthest-reaching diagonal instead of the middle snake.
+  // Perf: linear-space Myers (the middle-snake split of "An O(ND) Difference Algorithm", as GNU diff writes it):
+  // past `tooExpensive` edit steps it takes the furthest-reaching diagonal instead of the middle snake.
   function myersRegion(
     a: Int32Array,
     b: Int32Array,
@@ -155,8 +156,8 @@ function createSequenceDiff(): SequenceDiff {
     }
   }
 
-  // Elements found on one side only can never match: Myers runs on the rest, which for two unrelated files is
-  // often almost nothing (GNU diff's discard_confusing_lines, without its heuristics).
+  // Perf: elements found on one side only can never match, so Myers runs on the rest (GNU diff's
+  // discard_confusing_lines, without its heuristics).
   function myers(a: Int32Array, b: Int32Array, out: Int32Array, maxCost?: number) {
     let max = 0
     for (const id of a) if (id > max) max = id

@@ -109,7 +109,7 @@ const rowNavigation = definePrimitive({
     root: slot({}),
     row: slot<{ value: string }>({
       props: { value: "string" },
-      // A move changes two rows: only the one losing and the one taking `active` hear it, so a key press costs
+      // Perf: a move changes two rows: only the one losing and the one taking `active` hear it, so a key press costs
       // the same with 50 rows or 10,000. While nothing is active every row may claim the stop, so all hear `null`.
       selects: selects({ active: ({ key }) => [key, null] }),
       attrs: (state, part) => ({
@@ -124,7 +124,6 @@ const rowNavigation = definePrimitive({
       bind: (el, part) => part.api.roving.bind(el, part),
     }),
   }),
-  // Keys are a people-only accelerator: agents already act on the rows' own parts and the collection's actions.
   agent: { actions: [], shown: () => false },
 })
 

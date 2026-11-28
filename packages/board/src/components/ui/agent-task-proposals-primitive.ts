@@ -28,18 +28,16 @@ function proposalsOf(tasks: readonly TaskView[] = []): ProposalItem[] {
 function stateOf(options: AgentTaskProposalsOptions) {
   const approval = options.agentApproval ?? "confirm"
   const agentConfirm = approval === "confirm" ? options.agentConfirm || undefined : undefined
-  // Without a sentence to show, "confirm" can't ask a person, so the actions stay hidden rather than run unasked.
-  const askable = approval === "allow" || agentConfirm !== undefined
+  const agentRunAllowedOrAskable = approval === "allow" || agentConfirm !== undefined
   const handled = Boolean(options.onApproveProposal || options.onRejectProposal)
   return {
     proposals: proposalsOf(options.tasks),
-    available: options.mode === "live" && askable && handled,
+    available: options.mode === "live" && agentRunAllowedOrAskable && handled,
     agentConfirm,
   }
 }
 
-// `dispatch` reports only whether the change was canceled; the callback's Promise is what lets the bridge report pending and failure.
-function run(
+function dispatchKeepingCallbackResult(
   options: () => AgentTaskProposalsOptions,
   name: "onApproveProposal" | "onRejectProposal",
   id: string,
@@ -87,7 +85,7 @@ const agentTaskProposals = definePrimitive({
       }
       const call = { reason: options?.reason ?? "imperative", event: options?.event }
       const action = name === "onApproveProposal" ? "approveProposal" : "rejectProposal"
-      return settled(run(context.options, name, found.value, call), action, call)
+      return settled(dispatchKeepingCallbackResult(context.options, name, found.value, call), action, call)
     }
     return {
       approveProposal: (id: unknown, options?: ChangeOptions<ProposalReason>) => act("onApproveProposal", id, options),

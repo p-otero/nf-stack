@@ -109,7 +109,6 @@ function createScrollbarInput(host: ScrollbarHost) {
         const delta = axis === "x" && host.rtl() ? -distance : distance
         host.scrollTo(axis, draggedPosition(start, delta, host.metrics[axis], host.track[axis]))
       },
-      // Only Escape puts the content back; a lost pointer or a new press ends with its own event.
       onEnd: (end, canceled) => {
         if (canceled && end.type === "pointermove") host.scrollTo(axis, start)
         if (viewport) viewport.style.scrollSnapType = savedSnap

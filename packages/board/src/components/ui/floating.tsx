@@ -6,7 +6,7 @@ type FloatingSide = "top" | "bottom" | "start" | "end"
 type FloatingAlign = "start" | "center" | "end"
 type FloatingStrategy = "sticky" | "fixed" | "absolute"
 
-// Safe-area insets are physical, so the inline sides swap them under rtl.
+// Spec: safe-area insets are physical, so the inline sides swap them under rtl.
 const sideClassName: Record<FloatingSide, string> = {
   top: "inset-x-0 top-[calc(var(--floating-offset)+env(safe-area-inset-top))] flex-row ps-[max(var(--floating-offset),env(safe-area-inset-left))] pe-[max(var(--floating-offset),env(safe-area-inset-right))] rtl:ps-[max(var(--floating-offset),env(safe-area-inset-right))] rtl:pe-[max(var(--floating-offset),env(safe-area-inset-left))]",
   bottom:
@@ -28,7 +28,6 @@ type FloatingProps = ComponentProps<"div"> & {
   strategy?: FloatingStrategy
 }
 
-// The positioner spans the edge and lets clicks through; only its children catch them.
 function Floating({ side = "bottom", align = "center", strategy = "sticky", className, ...props }: FloatingProps) {
   return (
     <div

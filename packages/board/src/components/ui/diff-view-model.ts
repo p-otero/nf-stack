@@ -105,7 +105,6 @@ function extensionOf(path: string) {
   return dot > 0 ? name.slice(dot + 1).toLowerCase() : ""
 }
 
-/** Wraps parsed or computed file diffs for the view: paths, gaps and the lines each side has. */
 function toViewFiles(diffs: readonly FileDiff[]): DiffViewFile[] {
   const seen = new Map<string, number>()
   return diffs.map((diff) => {
@@ -121,7 +120,7 @@ function toViewFiles(diffs: readonly FileDiff[]): DiffViewFile[] {
 
 const expandedLines = new WeakMap<DiffGap, DiffLine[]>()
 
-/** The unchanged lines a gap hides, made once per gap. */
+/** Made once per gap. */
 function gapLines(file: DiffViewFile, gap: DiffGap) {
   let lines = expandedLines.get(gap)
   if (!lines) {
@@ -240,10 +239,7 @@ function longestOf(file: DiffViewFile) {
   return longest
 }
 
-/**
- * Builds the rows of the whole document, one list for every file, so one virtualizer scrolls it. Each file's rows
- * are cached by the state that shapes them: collapsing or expanding one file rebuilds that file only.
- */
+/** Each file's rows are cached by the state that shapes them: collapsing or expanding one file rebuilds it alone. */
 function createDocumentBuilder() {
   const cache = new WeakMap<DiffViewFile, { signature: string; rows: FileRows }>()
   const widths = new WeakMap<DiffViewFile, { longest: number; maxLine: number }>()

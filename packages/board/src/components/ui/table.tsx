@@ -8,9 +8,7 @@ import { cn } from "@/lib/utils"
 
 type TableProps = PartProps<"table"> & { containerClassName?: string }
 
-// The UI SDK viewport becomes a tab stop only while it overflows and holds nothing focusable,
-// so a narrow table stays keyboard-scrollable without adding a stop to every table.
-// The viewport repeats the table's name because agents list the scroll area as a component of its own.
+// Spec: agents list the scroll area as a component of its own, so the viewport repeats the table's name.
 function Table({ className, containerClassName, render, ...props }: TableProps) {
   const label = props["aria-label"]
   const labelledBy = props["aria-labelledby"]
@@ -91,7 +89,6 @@ type TableCellProps = PartProps<"td"> & {
   wrap?: boolean
 }
 
-// A cut-off cell shows its whole text in a native tooltip, set as the pointer arrives so cells that fit get none.
 function titleIfTruncated(event: PointerEvent<HTMLTableCellElement>) {
   const cell = event.currentTarget
   cell.title = cell.scrollWidth > cell.clientWidth ? (cell.textContent ?? "") : ""

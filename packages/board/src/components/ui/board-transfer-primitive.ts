@@ -50,8 +50,7 @@ function copyLists(lists: TransferLists | undefined): TransferLists {
   return Object.fromEntries(Object.entries(lists ?? {}).map(([list, keys]) => [list, [...keys]]))
 }
 
-// What the parts render, copied from the options so attributes read only state, on the server too.
-function shown(options: BoardTransferOptions) {
+function renderedStateOf(options: BoardTransferOptions) {
   return {
     handle: options.handle ?? false,
     handleFocus: options.handleFocus ?? ("roving" as "roving" | "card"),
@@ -84,11 +83,11 @@ const boardTransfer = definePrimitive({
     value: copyLists(options.value ?? options.defaultValue),
     moving: null as TransferDraft | null,
     focused: null as string | null,
-    ...shown(options),
+    ...renderedStateOf(options),
   }),
   sync: (options) => ({
     ...(options.value === undefined ? {} : { value: copyLists(options.value) }),
-    ...shown(options),
+    ...renderedStateOf(options),
   }),
   api: (context) => {
     const change = createChange(context)
@@ -123,7 +122,7 @@ const boardTransfer = definePrimitive({
       labels,
       disabled,
       itemLabel,
-      /** Moves a card to `index` in `list`, counting from 0, at once. */
+      /** `index` counts from 0 in `list`; the card moves at once. */
       move(key: unknown, list: unknown, index?: unknown) {
         const lists = context.store.get().value
         const id = typeof key === "string" ? key : undefined

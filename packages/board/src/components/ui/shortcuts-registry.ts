@@ -33,10 +33,9 @@ const prefixes = new Map<string, { count: number; off: () => void }>()
 let pending: { prefix: string; timer: ReturnType<typeof setTimeout> } | null = null
 let listing = false
 
-// UI SDK matches the modifiers it sees, but a symbol or digit takes different ones on different layouts: "?" is
-// Shift+/ in the US, Shift+' in Spain, AltGr on some Windows layouts and Option on some Mac ones; "/" is Shift+7 in
-// Spain; digits take Shift on AZERTY. So a step that is one such character matches the produced key with whichever
-// of Shift, Alt or AltGr (Ctrl+Alt) made it. Letters stay exact, since Shift changes what they mean.
+// Spec: a symbol or digit takes different modifiers on different layouts ("?" is Shift+/ in the US, Shift+' in
+// Spain, AltGr or Option elsewhere; digits take Shift on AZERTY), so it matches with whichever of Shift, Alt or
+// AltGr (Ctrl+Alt) made it. Letters stay exact, since Shift changes what they mean.
 const producedWith = ["", "shift+", "alt+", "alt+shift+", "ctrl+alt+", "ctrl+alt+shift+"]
 
 function variantsOf(step: string) {
@@ -60,7 +59,6 @@ function clearPending() {
   pending = null
 }
 
-// The next key press ends the sequence either way; clearing waits until UI SDK has matched it.
 function startPending(prefix: string) {
   clearPending()
   pending = { prefix, timer: setTimeout(clearPending, SEQUENCE_TIMEOUT) }

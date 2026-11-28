@@ -4,9 +4,7 @@ import { Empty, EmptyDescription, EmptyHeader } from "@/components/ui/empty"
 
 type AgentTaskBoardEmptyProps = {
   labels: AgentTaskBoardLabels
-  /** True when tasks exist but none match the filters. */
   filtered: boolean
-  /** Hides "Clear filters" when only filters without a control are set. */
   canClear?: boolean
   onClear: () => void
 }

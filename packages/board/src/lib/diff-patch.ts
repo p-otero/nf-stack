@@ -2,7 +2,7 @@ import type { DiffHunk, DiffLine, FileDiff } from "@/lib/diff-types"
 
 const hunkHeader = /^@@ -(\d+)(?:,(\d+))? \+(\d+)(?:,(\d+))? @@ ?(.*)$/
 
-// git quotes a path with unusual bytes as a C string: "a/caf\303\251.txt".
+// Spec: git quotes a path with unusual bytes as a C string: "a/caf\303\251.txt".
 function unquote(path: string) {
   if (!path.startsWith('"')) return path
   const bytes: number[] = []
@@ -32,13 +32,13 @@ function stripPrefix(path: string, prefixed: boolean) {
   return path.replace(/^[a-z]\//, "")
 }
 
-// `--- a/path\t2024-01-01 …`: a timestamp may follow a tab.
+// Spec: `--- a/path\t2024-01-01 …`: a timestamp may follow a tab.
 function headerPath(rest: string) {
   const value = rest.startsWith('"') ? rest.slice(0, rest.indexOf('"', 1) + 1) : rest.split("\t")[0]!.trimEnd()
   return value === "/dev/null" ? null : unquote(value)
 }
 
-// `diff --git a/x b/x`: with spaces in the name, the two halves are equal, so split it in the middle.
+// Spec: `diff --git a/x b/x`: with spaces in the name the two halves are equal.
 function gitHeaderPaths(rest: string): [string, string] | null {
   if (rest.startsWith('"')) {
     const end = rest.indexOf('"', 1)
@@ -186,7 +186,7 @@ function readHunk(lines: string[], start: number, header: RegExpExecArray, file:
   let newLeft = hunk.newLines
   let index = start + 1
   let last: DiffLine | undefined
-  // The counts, not the markers, say where a hunk ends: a removed line can begin with "--".
+  // Spec: the counts, not the markers, say where a hunk ends: a removed line can begin with "--".
   while (index < lines.length && (oldLeft > 0 || newLeft > 0 || lines[index]!.startsWith("\\"))) {
     let raw = lines[index]!
     if (raw.endsWith("\r")) raw = raw.slice(0, -1)

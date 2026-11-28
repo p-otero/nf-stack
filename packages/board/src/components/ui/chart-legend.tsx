@@ -6,7 +6,6 @@ import { chartSwatchColor, resolveChartSeries } from "@/lib/chart-config"
 import { cn, cssVars } from "@/lib/utils"
 import { useChart } from "@/components/ui/chart-context"
 
-// Recharts clones the content with every Legend prop, so only these are read and nothing is spread onto the DOM.
 type ChartLegendContentProps = {
   className?: string
   payload?: readonly LegendPayload[]

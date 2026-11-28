@@ -2,7 +2,7 @@ import type { Virtualizer } from "@ui-sdk/core"
 
 import { layersBesideViewport, windowScroller } from "@/components/ui/scroll-area-layers"
 
-/** Where a diff's rows are scrolled: the top of the view and its height, in the scroller's pixels. */
+/** In the scroller's pixels. */
 type DiffScroll = { top: () => number; height: () => number }
 
 function scrollingAncestor(el: HTMLElement) {
@@ -13,17 +13,15 @@ function scrollingAncestor(el: HTMLElement) {
   return null
 }
 
-/** A diff sized to its content scrolls with its nearest scrolling ancestor; one capped by `--diff-max-height` doesn't. */
-function scrollsOutside(viewport: HTMLElement) {
+function scrollsWithAncestor(viewport: HTMLElement) {
   if (viewport.dataset.height !== "auto") return false
   const root = viewport.closest<HTMLElement>("[data-slot=diff-view]")
   return !root || getComputedStyle(root).maxHeight === "none"
 }
 
 /**
- * Connects the virtualizer to the diff's own viewport, or, for a diff sized to its content, to the nearest scrolling
- * ancestor (the window when there is none), with the viewport's offset in it as the scroll margin. The offset is read
- * again before the virtualizer's own scroll handler and on a resize, so content above that grows moves it.
+ * A diff sized to its content (and not capped by `--diff-max-height`) scrolls with its nearest scrolling ancestor, or
+ * the window, with its offset in it as the scroll margin, read again before each scroll and on a resize.
  */
 function connectDiffScroll(
   viewport: HTMLElement,
@@ -31,7 +29,7 @@ function connectDiffScroll(
   findable: boolean,
   setMargin: (margin: number) => void,
 ): { scroll: DiffScroll; disconnect: () => void } {
-  if (!scrollsOutside(viewport)) {
+  if (!scrollsWithAncestor(viewport)) {
     setMargin(0)
     const restore = layersBesideViewport(viewport)
     const disconnect = virtual.connect(viewport, { findable })

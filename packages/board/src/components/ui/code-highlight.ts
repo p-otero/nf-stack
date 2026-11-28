@@ -35,7 +35,7 @@ const aliases: Record<string, CodeLanguage> = {
 const known = new Set<string>(["ts", "tsx", "js", "jsx", "json", "css", "html", "bash", "sh", "md", "diff"])
 const isKnown = (key: string): key is CodeLanguage => known.has(key)
 
-/** Maps a fence's info string or a file extension ("typescript", "zsh") to a language, or `plaintext`. */
+/** Takes a fence's info string or a file extension ("typescript", "zsh"); unknown names give `plaintext`. */
 function normalizeLanguage(name?: string): CodeLanguage {
   const key = (name ?? "").trim().split(/\s/)[0]?.toLowerCase() ?? ""
   if (isKnown(key)) return key
@@ -100,17 +100,16 @@ const loaders: Partial<Record<CodeLanguage, () => Promise<Parser>>> = {
 const parsers = new Map<CodeLanguage, Parser>()
 const loading = new Map<CodeLanguage, Promise<void>>()
 
-/** The loaded parser for `language`, or undefined while it loads or when it has none (bash, diff, plaintext). */
+/** Undefined while the parser loads, or for a language without one (bash, diff, plaintext). */
 function parserFor(language: CodeLanguage) {
   return parsers.get(language)
 }
 
-/** Whether `language` still has a parser to fetch before `highlight` can colour it. */
 function needsParser(language: CodeLanguage) {
   return Boolean(loaders[language]) && !parsers.has(language)
 }
 
-/** Fetches a language's parser once; every block of that language re-renders highlighted when it resolves. */
+/** Fetches once; every block of that language re-renders highlighted when it resolves. */
 function loadParser(language: CodeLanguage) {
   const load = loaders[language]
   if (!load || parsers.has(language)) return Promise.resolve()
@@ -124,7 +123,7 @@ function loadParser(language: CodeLanguage) {
   return pending
 }
 
-/** Loads `language`'s parser if it still needs one and calls `onLoad` when it arrives, unless unsubscribed first. */
+/** Calls `onLoad` when the parser arrives, unless unsubscribed first. */
 function watchParser(language: CodeLanguage, onLoad: () => void) {
   let active = true
   if (needsParser(language))
@@ -210,10 +209,7 @@ function diffKind(line: string): DiffKind | undefined {
   return undefined
 }
 
-/**
- * Splits code into lines of tokens with a syntax tone each. A language whose parser hasn't loaded yet comes back
- * plain; call `loadParser` and highlight again once it resolves.
- */
+/** A language whose parser hasn't loaded yet comes back plain; call `loadParser` and highlight again once it resolves. */
 function highlight(code: string, language: CodeLanguage, parser = parsers.get(language)): CodeLine[] {
   if (language === "diff") {
     return code.split("\n").map((line) => ({ tokens: line ? [{ text: line }] : [], diff: diffKind(line) }))

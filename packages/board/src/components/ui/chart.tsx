@@ -16,9 +16,7 @@ import { ChartTooltipContent, type ChartTooltipContentProps } from "@/components
 import { ChartLegendContent, type ChartLegendContentProps } from "@/components/ui/chart-legend"
 import { ChartDataTable, type ChartDataTableProps } from "@/components/ui/chart-data-table"
 
-// Recharts paints grid, axis and cursor with fixed hex colors; these map them to theme tokens.
-// The focus ring stays on the keyboard-focusable surface the accessibility layer adds.
-const rechartsClassName = [
+const rechartsThemeClassName = [
   "[&_.recharts-cartesian-axis-tick-value]:fill-muted-foreground",
   "[&_.recharts-polar-angle-axis-tick-value]:fill-muted-foreground [&_.recharts-polar-radius-axis-tick-value]:fill-muted-foreground",
   "[&_.recharts-cartesian-grid_line[stroke='#ccc']]:stroke-border",
@@ -54,7 +52,7 @@ function ChartContainer({ id, config, className, children, initialDimension, ...
         id={id}
         data-slot="chart"
         data-chart={chartId}
-        className={cn("relative flex aspect-video w-full justify-center text-xs", rechartsClassName, className)}
+        className={cn("relative flex aspect-video w-full justify-center text-xs", rechartsThemeClassName, className)}
         {...props}
       >
         <ChartStyle id={chartId} config={config} />

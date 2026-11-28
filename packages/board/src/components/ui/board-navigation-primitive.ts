@@ -9,7 +9,6 @@ type Card = RovingFocusMoveContext["items"][number]
 
 const columnOf = (el: HTMLElement) => el.closest('[data-slot="board-column"]')
 
-/** The cards in their columns, columns in document order, leaving out columns with no card that can take focus. */
 function columnsOf(items: RovingFocusMoveContext["items"]) {
   const columns = new Map<Element | null, Card[]>()
   for (const item of items) {
@@ -23,7 +22,6 @@ function isActivator(el: HTMLElement) {
   return el instanceof HTMLAnchorElement || el instanceof HTMLButtonElement || el.getAttribute("role") === "button"
 }
 
-/** Where a key press goes on the board, as a column step, a row step or a jump; undefined for keys it leaves alone. */
 function stepOf(event: KeyboardEvent, rtl: boolean) {
   if (event.altKey || event.shiftKey) return undefined
   const corner = event.ctrlKey || event.metaKey
@@ -46,6 +44,10 @@ function stepOf(event: KeyboardEvent, rtl: boolean) {
   }
 }
 
+function cardAtRowOrLast(cards: readonly Card[] | undefined, row: number) {
+  return cards?.[Math.min(row, cards.length - 1)]
+}
+
 function target(event: KeyboardEvent, { from, items, rtl }: RovingFocusMoveContext) {
   const step = stepOf(event, rtl)
   if (step === undefined) return undefined
@@ -59,9 +61,7 @@ function target(event: KeyboardEvent, { from, items, rtl }: RovingFocusMoveConte
   if (step === "board-first") return items[0]
   if (step === "board-last") return items.at(-1)
   if (step.row !== undefined) return cards[row + step.row]
-  // Across columns the card keeps its row, or takes the last one of a shorter column, as on a Linear board.
-  const next = columns[column + step.column]
-  return next?.[Math.min(row, next.length - 1)]
+  return cardAtRowOrLast(columns[column + step.column], row)
 }
 
 function move(event: KeyboardEvent, moveContext: RovingFocusMoveContext) {
@@ -95,7 +95,7 @@ const boardNavigation = definePrimitive({
           onOpen(id, event)
         }
       },
-      /** Gives a card the tab stop without moving focus, like when focus lands on one of its own controls. */
+      /** Gives a card the tab stop without moving focus. */
       activate: (id: string) => context.store.set({ active: id }),
       active: () => context.store.get().active,
     }
@@ -104,8 +104,8 @@ const boardNavigation = definePrimitive({
     root: slot({}),
     card: slot<{ value: string }>({
       props: { value: "string" },
-      // Only the card losing and the one taking `active` hear a move; before the board is entered every card may
-      // claim the stop, so all hear `null`.
+      // Perf: a move re-renders only the card losing and the one taking `active`; before the board is entered every
+      // card may claim the stop, so all hear `null`.
       selects: selects({ active: ({ key }) => [key, null] }),
       attrs: (state, part) => ({
         tabindex: part.api.roving.tabIndex(state, part),
@@ -119,7 +119,6 @@ const boardNavigation = definePrimitive({
       bind: (el, part) => part.api.roving.bind(el, part),
     }),
   }),
-  // Keys are a people-only accelerator: agents select and act on cards through the board's own parts and actions.
   agent: { actions: [], shown: () => false },
 })
 

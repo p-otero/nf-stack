@@ -38,7 +38,6 @@ const searchField = definePrimitive({
           const keyboard = event as KeyboardEvent
           if (!(keyboard.target instanceof HTMLInputElement)) return
           if (keyboard.key === "Escape") {
-            // An empty field lets Escape bubble, so an enclosing dialog or popover can still close.
             if (api.clear()) {
               keyboard.preventDefault()
               keyboard.stopPropagation()

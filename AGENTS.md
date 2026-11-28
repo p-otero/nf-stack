@@ -15,7 +15,7 @@ the package layout and Effect conventions.
 ## Agent skills
 
 The board's UI skills are installed files under `.agents/skills`: `eskais-ui`, `eskais-perf` and
-`eskais-mockup` from the Eskais UI tag the registry pins (v0.2.11), and UI SDK's `ui-sdk` from the
+`eskais-mockup` from the Eskais UI tag the registry pins (v0.2.19), and UI SDK's `ui-sdk` from the
 version in `node_modules`; `skills-lock.json` records both. `skills add` also writes
 `.claude/skills`, which holds absolute symlinks and stays uncommitted. Refresh them after a re-pin,
 with Vercel's skills CLI pinned and telemetry off:

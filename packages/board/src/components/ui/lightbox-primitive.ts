@@ -9,7 +9,7 @@ type LightboxOptions = {
   index?: number
   count?: number
   onIndexChange?: (index: number, details: ChangeDetails<LightboxIndexChangeReason>) => void
-  /** The items as agents see them: `{ value, label }`, value being the index as text. */
+  /** The items as agents see them; `value` is the index as text. */
   entries?: readonly { value: string; label: string }[]
 }
 
@@ -42,9 +42,8 @@ const lightbox = definePrimitive({
       return settled(change("index", index, reasonOf(options)), action, reasonOf(options))
     }
     return {
-      // The agent bridge passes arguments unchecked, and items list the index as text.
-      goTo(index: unknown, options?: ChangeOptions<LightboxIndexChangeReason>) {
-        const target = typeof index === "string" && index.trim() !== "" ? Number(index) : index
+      goTo(indexOrText: unknown, options?: ChangeOptions<LightboxIndexChangeReason>) {
+        const target = typeof indexOrText === "string" && indexOrText.trim() !== "" ? Number(indexOrText) : indexOrText
         const { count } = context.store.get()
         if (typeof target !== "number" || !Number.isInteger(target) || target < 0 || target >= count) {
           throw new RangeError(`goTo takes an index from 0 to ${count - 1}.`)

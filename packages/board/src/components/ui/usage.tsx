@@ -101,7 +101,6 @@ function exactFormatter(kind: UsageKind, locale?: string) {
 type UsageQuantityProps = Omit<PartProps<"span">, "children"> &
   UsageFormatOptions & { value?: Quantity; kind: UsageKind; labels?: Partial<QuantityLabels> }
 
-// Compact text hides the exact count, so the title carries it next to the quality and source.
 function UsageQuantity({ value = UNKNOWN, kind, locale, formatCurrency, labels, ...props }: UsageQuantityProps) {
   const exact = exactFormatter(kind, locale)
   const quality = formatQuantity(value, { locale, labels }).title

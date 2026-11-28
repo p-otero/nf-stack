@@ -42,7 +42,6 @@ const listRowAction = definePrimitive({
   api: (context) => {
     const rows = () => context.options().rows ?? []
     return {
-      // The agent bridge passes arguments unchecked.
       run(id: unknown, options?: ChangeOptions<ListRowActionReason>) {
         const row = rows().find((candidate) => candidate.value === id)
         if (!row) {
@@ -55,8 +54,8 @@ const listRowAction = definePrimitive({
           return unavailable("run", `isn't available on "${row.label}"${why}`, details)
         }
         if (dispatch(context, "onRun", row.value, details)) return settled(false, "run", details)
-        // A person's press already presses the button or follows the link; only other callers need it done.
-        if (!details.event) context.options().perform?.(row.value)
+        const pressAlreadyRanAction = Boolean(details.event)
+        if (!pressAlreadyRanAction) context.options().perform?.(row.value)
         return true
       },
       rows: () => rows().map(({ value, label }) => ({ value, label })),

@@ -30,7 +30,6 @@ const agentBadgeLabelsEs: AgentBadgeLabels = {
   },
 }
 
-/** Same comparison as `agentDiffers`, for two refs instead of an attempt. */
 function sameAgent(a: AgentRef, b: AgentRef) {
   return a.provider === b.provider && a.model === b.model && a.effort?.value === b.effort?.value
 }
@@ -45,8 +44,7 @@ function describeAgent(agent: AgentRef, labels: AgentBadgeLabels) {
   return [agent.provider, agent.model, formatEffort(agent.effort, true, labels)].filter(Boolean).join(" · ")
 }
 
-/** The part of `requested` that differs from `agent`, the shortest thing that tells them apart. */
-function requestedDifference(agent: AgentRef, requested: AgentRef) {
+function shortestRequestedDifference(agent: AgentRef, requested: AgentRef) {
   if (requested.model !== agent.model) return requested.label ?? requested.model
   if (requested.provider !== agent.provider) return requested.provider
   return requested.effort?.value ?? "—"
@@ -59,7 +57,6 @@ function agentSummary(agent: AgentRef, requested: AgentRef | undefined, labels: 
   return [describeAgent(agent, labels), requestedInFull].filter(Boolean).join(" — ")
 }
 
-/** What a card has room for: the agent's label, or the last segment of its model id. */
 function shortModel(agent: AgentRef) {
   return agent.label ?? agent.model.slice(agent.model.lastIndexOf("/") + 1)
 }
@@ -96,7 +93,8 @@ function AgentBadge({
   const differs = requested !== undefined && !sameAgent(agent, requested)
   const effort = formatEffort(agent.effort, showEffortName ?? detail, labels)
   const requestedInFull = differs ? `${labels.requested} ${describeAgent(requested, labels)}` : undefined
-  const marker = differs && !detail ? `${labels.requested} ${requestedDifference(agent, requested)}` : requestedInFull
+  const marker =
+    differs && !detail ? `${labels.requested} ${shortestRequestedDifference(agent, requested)}` : requestedInFull
   const title = agentSummary(agent, requested, labels)
 
   return renderElement(

@@ -57,7 +57,6 @@ function reasonOf<Reason extends string>(options: unknown): { reason: Reason | "
   return { reason, event: event instanceof Event ? event : undefined }
 }
 
-// The agent bridge passes action arguments unchecked, so every action validates its own.
 const dataTable = definePrimitive({
   name: "data-table",
   options: {
@@ -88,17 +87,17 @@ const dataTable = definePrimitive({
   controlled: ["sort", "selection", "page"],
   api: (context) => {
     const change = createChange(context)
-    // A controlled selection reaches the store only once the table renders again, and agent steps run back to back
-    // without one: a toggle builds on what the previous call chose while the store still shows the same selection.
-    let chosen: { shown: readonly string[]; next: string[] } | null = null
+    let selectionAwaitingRender: { shown: readonly string[]; next: string[] } | null = null
     const latest = () => {
       const shown = context.store.get().selection
-      return chosen !== null && chosen.shown === shown ? chosen.next : shown
+      return selectionAwaitingRender !== null && selectionAwaitingRender.shown === shown
+        ? selectionAwaitingRender.next
+        : shown
     }
     const select = (next: string[], action: string, options?: ChangeOptions<DataTableSelectionChangeReason>) => {
       const shown = context.store.get().selection
       const changed = change("selection", next, reasonOf(options))
-      if (changed !== false) chosen = { shown, next }
+      if (changed !== false) selectionAwaitingRender = { shown, next }
       return settled(changed, action, reasonOf(options))
     }
     return {

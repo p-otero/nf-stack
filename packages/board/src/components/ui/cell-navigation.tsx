@@ -10,7 +10,7 @@ type CellNavigationHandle = PrimitiveHandle<typeof cellNavigation>
 const CellNavigationContext = createContext<CellNavigationHandle | null>(null)
 const CellIdContext = createContext("")
 
-/** The instance that gives a table's cells one tab stop; pass it to `CellNavigationProvider`. */
+/** Pass the result to `CellNavigationProvider`. */
 function useCellNavigation(options: CellNavigationOptions) {
   return usePrimitive(cellNavigation, options)
 }
@@ -36,7 +36,6 @@ function NavigableCellPart({
   render: ReactElement
 }) {
   const id = `${use(CellIdContext)}-${String(row)}-${String(col)}`
-  // The cell keeps its own `data-slot` (`table-cell`), which the part would otherwise replace with its slot's.
   return usePart(
     handle,
     "cell",
@@ -50,14 +49,14 @@ function NavigableCellPart({
   )
 }
 
-/** Makes `render`, a table cell, the cell at `row` and `col`. Outside a `CellNavigationProvider` it renders unchanged. */
+/** Outside a `CellNavigationProvider` it renders `render` unchanged. */
 function NavigableCell({ row, col, render }: { row: number; col: number; render: ReactElement }) {
   const handle = use(CellNavigationContext)
   if (!handle) return render
   return <NavigableCellPart handle={handle} row={row} col={col} render={render} />
 }
 
-/** Whether cells take the keys here, so rows leave the tab stop to them. */
+/** True where cells take the keys, so rows leave the tab stop to them. */
 function useCellNavigationActive() {
   return use(CellNavigationContext) !== null
 }

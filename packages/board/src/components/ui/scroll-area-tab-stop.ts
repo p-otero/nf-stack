@@ -23,13 +23,16 @@ function focusableIn(node: Node, root: Element) {
  * Makes `el` a tab stop while `wanted()` and nothing focusable sits below it, as axe's scrollable-region-focusable
  * asks. One focusable descendant, the witness, proves it needs no stop, so a mutation costs a look at the nodes it
  * touched: a roving tabindex moving between rows never rescans the content, which only happens when the witness
- * itself goes. An authored `tabindex` wins and turns all of it off.
+ * itself goes. A `tabindex` written by anyone else, before or after it binds, wins and turns all of it off.
  */
 function bindTabStop(el: HTMLElement, wanted: () => boolean) {
   if (el.hasAttribute("tabindex") && !ownTabStops.has(el)) return { check: () => {}, stop: () => {} }
   let witness = focusableIn(el, el)
+  let written = el.getAttribute("tabindex")
+  let handedOver = false
 
   const check = () => {
+    if (handedOver) return
     const stop = wanted() && !witness ? "0" : null
     if (el.getAttribute("tabindex") === stop) return
     if (stop === null) {
@@ -39,11 +42,18 @@ function bindTabStop(el: HTMLElement, wanted: () => boolean) {
       el.setAttribute("tabindex", stop)
       ownTabStops.add(el)
     }
+    written = stop
   }
   check()
   if (typeof MutationObserver === "undefined") return { check, stop: () => {} }
 
   const observer = new MutationObserver((records) => {
+    if (el.getAttribute("tabindex") !== written) {
+      handedOver = true
+      ownTabStops.delete(el)
+      observer.disconnect()
+      return
+    }
     const before = witness
     const touched: Node[] = []
     for (const record of records) {
@@ -59,7 +69,7 @@ function bindTabStop(el: HTMLElement, wanted: () => boolean) {
     for (const node of witness ? [] : touched) {
       if (node.isConnected && el.contains(node)) witness ??= focusableIn(node, el)
     }
-    // Only a witness that left with no newcomer to replace it costs a look at the whole content.
+    // Perf: only a witness that left with no newcomer to replace it costs a look at the whole content.
     if (before && !witness) witness = focusableIn(el, el)
     check()
   })

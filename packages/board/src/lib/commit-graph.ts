@@ -91,8 +91,6 @@ function nest(graph: CommitGraph, state: NestState, from: number): CommitGraph {
     let parent = -1
     if (claim && claim.owner >= 0) {
       const at = stack.lastIndexOf(claim.owner)
-      // A merged branch shows as one block under its merge; once the mainline moves on, a late commit of it
-      // can't join the block, so it falls back to the top level.
       if (at >= 0) {
         stack.length = at + 1
         parent = claim.owner

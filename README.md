@@ -513,8 +513,8 @@ board's telemetry tab. The page's data comes from TanStack Query (`@tanstack/rea
 to an exact version): a snapshot boots it with the embedded payload as `initialData` and never
 refetches, while `nf serve` answers the same shape and the page polls `["board", project]` every
 5 s (`refetchInterval: 5000`, not in a background tab). The components come from the
-public `p-otero/eskais-ui` registry pinned to the Eskais UI v0.2.11 tag
-(`refs/tags/v0.2.11`) in `packages/board/components.json`, and are installed with shadcn (`theme`,
+public `p-otero/eskais-ui` registry pinned to the Eskais UI v0.2.19 tag
+(`refs/tags/v0.2.19`) in `packages/board/components.json`, and are installed with shadcn (`theme`,
 `theme-glass`, `font-geist`, `floating`, `card`, `liveness-indicator`, `appearance`,
 `agent-task-board`, `badge`, `chart`, `data-table`, `meter`, `stat`, `tabs`, `attachments`,
 `lightbox`, `stage-track`, `list-item`, `textarea`, `repository-select`, `commit-history`,

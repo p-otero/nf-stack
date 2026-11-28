@@ -43,7 +43,6 @@ function renameLabel(oldPath: string, newPath: string) {
   return `${prefix ? `${prefix}/` : ""}{${middle}}${suffix ? `/${suffix}` : ""}`
 }
 
-// The path truncates only when the header runs out of room; the native tooltip and screen readers get it whole.
 function FilePath({ file, labels }: { file: DiffViewFile; labels: DiffLabels }) {
   const { oldPath, newPath, status } = file.diff
   const moved = (status === "renamed" || status === "copied") && oldPath && newPath && oldPath !== newPath
@@ -69,17 +68,13 @@ type HeaderProps = {
   api: DiffViewApi
   file: DiffViewFile
   start: number
-  /** The row's height from the theme (`--diff-header-height`): headers aren't measured. */
   size: number
   viewed: boolean
   collapsed: boolean
   labels: DiffLabels
 }
 
-/**
- * A file's header row: collapse, status, path (with the rename), mode change, counts and the viewed checkbox.
- * Memoized: a scroll renders the document again, and each header holds several UI SDK parts.
- */
+// Perf: memoized, since a scroll renders the document again and each header holds several UI SDK parts.
 const DiffFileHeader = memo(function DiffFileHeader({
   api,
   file,
@@ -95,7 +90,6 @@ const DiffFileHeader = memo(function DiffFileHeader({
     <div data-slot="diff-file-header" className="absolute inset-x-0 pt-items contain-layout" style={style}>
       {/* oxlint-disable-next-line shadcn/no-arbitrary-values -- the viewport is dir="ltr" for the code; the header follows the page */}
       <div className="sticky start-0 flex h-full w-(--diff-viewport-width,100%) items-center gap-inline border-y border-border bg-card px-inline py-inline font-sans whitespace-nowrap text-card-foreground [direction:var(--diff-page-direction,ltr)]">
-        {/* The button's tooltip renders beside it: wrapped, it takes no gap of the header's row. */}
         <span className="flex shrink-0">
           <Button
             size="icon"

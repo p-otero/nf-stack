@@ -17,11 +17,18 @@ type FindableRowsOptions = {
   findable: boolean
 }
 
+type FindableRowsHandles = {
+  /** The scroller, the nearest element that scrolls the rows: pass it as its `ref`. */
+  setScroller: (scroller: HTMLElement | null) => void
+  /** Keeps a row rendered wherever the list scrolls, like the one with focus; `undefined` lets it go. */
+  pin: (index: number | undefined) => void
+}
+
 type Latest = Omit<FindableRowsOptions, "findable">
 
 const noKeep: readonly number[] = []
 
-// The layers hold a stand-in for every row, so they wait until the first paint is done and the page is idle.
+// Perf: the layers hold a stand-in for every row, so they wait until the first paint is done and the page is idle.
 function whenIdle(run: () => void) {
   const idle = globalThis.requestIdleCallback as typeof requestIdleCallback | undefined
   const cancelIdle = globalThis.cancelIdleCallback as typeof cancelIdleCallback | undefined
@@ -33,7 +40,6 @@ function whenIdle(run: () => void) {
   return () => clearTimeout(timer)
 }
 
-/** A virtualizer that reads the newest options, which `update` swaps in; outside React, so it can hold them. */
 function createRows(initial: Latest) {
   let latest = initial
   let keep = noKeep
@@ -57,8 +63,7 @@ function createRows(initial: Latest) {
       latest = next
       virtual.refresh()
     },
-    // Read on the virtualizer's next update, like the scroll a key press makes: refreshing here would render the
-    // list on every focus move.
+    // Perf: refreshing here would render the list on every focus move.
     pin(index: number | undefined) {
       if (keep[0] !== index) keep = index === undefined ? noKeep : [index]
     },
@@ -76,7 +81,6 @@ function useFindableRows({ count, estimate, getKey, text, findable }: FindableRo
   const { virtual } = rows
   const [scroller, setScroller] = useState<HTMLElement | null>(null)
 
-  // The virtualizer reads the newest options when it computes; `update` tells it only when they changed.
   useLayoutEffect(() => {
     rows.update({ count, estimate, getKey, text })
   })
@@ -101,7 +105,6 @@ function useFindableRows({ count, estimate, getKey, text, findable }: FindableRo
   const items = useSyncExternalStore(virtual.subscribe, virtual.items, virtual.items)
   const size = useSyncExternalStore(virtual.subscribe, virtual.size, virtual.size)
 
-  /** Keeps a row rendered wherever the list scrolls, like the one with focus. */
   const pin = useCallback((index: number | undefined) => rows.pin(index), [rows])
   const scrollToIndex = useCallback(
     (index: number) => {
@@ -110,15 +113,14 @@ function useFindableRows({ count, estimate, getKey, text, findable }: FindableRo
     [virtual, enabled],
   )
 
+  const handles: FindableRowsHandles = { setScroller, pin }
   return {
     enabled,
     items,
     size,
-    /** The scroller, the nearest element that scrolls the rows: pass it as its `ref`. */
-    setScroller,
     measure: virtual.measure,
     findableText: virtual.findableText,
-    pin,
+    ...handles,
     scrollToIndex,
   }
 }

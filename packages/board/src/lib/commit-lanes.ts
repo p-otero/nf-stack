@@ -19,7 +19,6 @@ type LaneRow = {
   /** Each drawn lane's tag at the top of the row and at its bottom, like a branch's colour. */
   tagsTop: readonly number[]
   tagsBottom: readonly number[]
-  /** The node's tag. */
   tag: number
 }
 
@@ -46,8 +45,13 @@ type LaneLayout = {
 
 const NONE: readonly number[] = []
 
-/** Free lane indexes, smallest first; entries a lane has taken since are skipped as they come up. */
-function createFreeLanes() {
+type FreeLanes = {
+  push: (lane: number) => void
+  /** The smallest free lane at `from` or after, else `fallback` (a new lane at the end). */
+  take: (lanes: readonly (string | null)[], from: number, fallback: number) => number
+}
+
+function createFreeLanes(): FreeLanes {
   const heap: number[] = []
   const push = (lane: number) => {
     heap.push(lane)
@@ -78,8 +82,7 @@ function createFreeLanes() {
   }
   return {
     push,
-    /** The smallest free lane at `from` or after, else `fallback` (a new lane at the end). */
-    take(lanes: readonly (string | null)[], from: number, fallback: number) {
+    take(lanes, from, fallback) {
       while (heap.length > 0) {
         const lane = heap[0]!
         if (lane >= lanes.length || lanes[lane] !== null) {

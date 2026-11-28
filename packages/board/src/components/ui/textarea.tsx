@@ -3,11 +3,9 @@
 import { Textarea as TextareaPrimitive, createInputController } from "@ui-sdk/react/textarea"
 import type { ComponentProps } from "react"
 
-import { floatingLabelControls } from "@/components/ui/field"
-import { fieldSurfaceClassName } from "@/components/ui/input"
+import { fieldSurfaceClassName, floatingLabelControls } from "@/components/ui/field"
 import { cnState } from "@/lib/utils"
 
-// rounded-control is a pill in the default theme and clips multi-line text.
 function Textarea({ className, ...props }: ComponentProps<typeof TextareaPrimitive>) {
   return (
     <TextareaPrimitive

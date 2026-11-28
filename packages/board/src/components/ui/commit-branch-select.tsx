@@ -37,11 +37,7 @@ function LaneDot({ tag }: { tag: number }) {
   return <span className={cn("block size-2 rounded-full bg-current", laneColor(tag))} />
 }
 
-/**
- * Which branch the branches view shows: every one, or one alone. Each branch is a dot in its lane's colour, its
- * name, and how far ahead and behind the base it is, with its last update; typing filters them by name. UI SDK's
- * Select with its search field, so arrows, typeahead and agents work as in any select.
- */
+/** Shows every branch in the branches view, or one alone; typing filters them by name. */
 const CommitBranchSelect = memo(function CommitBranchSelect({
   branches,
   focused,

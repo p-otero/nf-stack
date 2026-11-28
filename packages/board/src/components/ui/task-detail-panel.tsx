@@ -80,8 +80,7 @@ function TaskDetailPanel({
   }
 
   return (
-    // Escape anywhere inside the non-modal panel closes it, as it would a dialog; the handler only listens to bubbling keys.
-    // oxlint-disable-next-line jsx-a11y/no-noninteractive-element-interactions
+    // oxlint-disable-next-line jsx-a11y/no-noninteractive-element-interactions -- Escape anywhere inside the non-modal panel closes it, as it would a dialog
     <section
       data-slot="task-detail-panel"
       data-task-id={task.id}

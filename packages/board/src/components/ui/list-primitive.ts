@@ -29,7 +29,6 @@ const list = definePrimitive({
   api: (context) => {
     const entries = () => context.options().entries ?? []
     return {
-      // The agent bridge passes arguments unchecked.
       select(id: unknown, options?: ChangeOptions<ListSelectReason>) {
         const row = entries().find((entry) => entry.value === id)
         if (!row) {
@@ -38,8 +37,8 @@ const list = definePrimitive({
         }
         const details = reasonOf(options)
         if (dispatch(context, "onSelect", row.value, details)) return settled(false, "select", details)
-        // A person's click already follows the link or presses the button; only other callers need it done.
-        if (details.event) return true
+        const pressAlreadyActivatedRow = Boolean(details.event)
+        if (pressAlreadyActivatedRow) return true
         return context.options().activate?.(row.value) ?? true
       },
       entries,

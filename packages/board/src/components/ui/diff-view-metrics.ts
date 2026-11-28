@@ -1,13 +1,11 @@
 import type { DiffRow } from "@/components/ui/diff-view-model"
 
-/** Row heights in px. Rows aren't measured while lines don't wrap: each measurement lays the page out. */
+/** Row heights in px. */
 type DiffMetrics = { line: number; gap: number; header: number; notice: number }
 
 const defaultMetrics: DiffMetrics = { line: 20, gap: 36, header: 58, notice: 36 }
 
-// Row heights the theme gives, read once per viewport: a file header holds an icon button between two inline gaps and
-// two borders, after a gap from the file above; gap and notice rows fit a small button.
-const heights = {
+const themeRowHeights = {
   header: "calc(var(--control-height) + 2 * var(--gap-inline) + 2px + var(--gap-items))",
   gap: "calc(max(var(--control-height-sm), 1lh) + 4px)",
 }
@@ -23,8 +21,8 @@ function probe(el: HTMLElement, height: string) {
 
 function readMetrics(el: HTMLElement): DiffMetrics {
   const line = Number.parseFloat(getComputedStyle(el).lineHeight)
-  const gap = probe(el, heights.gap)
-  const header = probe(el, heights.header)
+  const gap = probe(el, themeRowHeights.gap)
+  const header = probe(el, themeRowHeights.header)
   return {
     line: line > 0 ? line : defaultMetrics.line,
     gap: gap > 0 ? gap : defaultMetrics.gap,

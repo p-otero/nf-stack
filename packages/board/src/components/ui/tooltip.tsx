@@ -83,8 +83,6 @@ function skipsTooltip({ disabled, focusableWhenDisabled, ...props }: TriggerProp
   return wired || hidden || (disabled === true && focusableWhenDisabled !== true)
 }
 
-// A long press on a touch screen would show the tooltip over the finger and then press the control, so tooltips
-// stay a pointer and keyboard aid.
 function ignoreTouch(open: boolean, details: { reason: TooltipOpenChangeReason; event?: Event; cancel: () => void }) {
   const event = details.event
   if (open && typeof PointerEvent !== "undefined" && event instanceof PointerEvent && event.pointerType === "touch") {

@@ -18,9 +18,10 @@ import { cn, cssVars } from "@/lib/utils"
 
 const NONE: readonly BranchInfo[] = []
 
-/** A branch at its head: a dot in its lane's colour, the name, and how far ahead and behind the base it is. */
-// A press on it shows only this branch (the row's own press handler reads `data-branch`), so it's a pointer
-// shortcut: keyboards and agents reach the same through the branch select and `focusBranch`.
+/**
+ * A press shows only this branch (the row's press handler reads `data-branch`); keyboards and agents reach the same
+ * through the branch select and `focusBranch`.
+ */
 function BranchPill({ branch, locale, focused }: { branch: BranchInfo; locale?: string; focused: boolean }) {
   return (
     <span
@@ -45,10 +46,7 @@ type BranchCountsProps = {
   spoken?: Pick<CommitHistoryLabels, "ahead" | "behind">
 }
 
-/**
- * How far a branch is ahead of and behind the base, as arrows and numbers. A zero side is left out, which reads
- * cleaner than a dimmed 0 and keeps every number shown at full contrast; the spoken text still says both.
- */
+/** A zero side is left out; the `spoken` text still says both. */
 function BranchCounts({ ahead, behind, locale, spoken }: BranchCountsProps) {
   return (
     <span
@@ -139,7 +137,6 @@ function MessageSegment({ segment, textRef }: SegmentProps) {
 
 type NameContext = Pick<CommitRowContext, "now" | "locale" | "labels">
 
-/** What follows the subject in a row's name: ", 38 minutes ago, Release". */
 /** What a branch pill reads: "branch feature/webhooks, 3 ahead, 12 behind". */
 function branchName(branch: BranchInfo, context: NameContext) {
   const { labels, locale } = context
@@ -190,11 +187,9 @@ function CommitDetails({ commit, context, id }: { commit: Commit; context: Commi
           variant="ghost"
           size="icon"
           aria-label={copied ? labels.copied : labels.copyHash}
-          // The history's copyHash action serves agents; this button would repeat it on every open row.
           data-agent-hidden=""
           className="size-6 text-muted-foreground [&_svg]:size-3.5"
           onClick={(event) => context.copyHash(commit.id, event.nativeEvent)}
-          // The row's Enter toggles its details; on the button, Enter and Space press the button.
           onKeyDown={(event) => {
             if (event.key === "Enter" || event.key === " ") event.stopPropagation()
           }}
@@ -222,8 +217,7 @@ function CommitDetails({ commit, context, id }: { commit: Commit; context: Commi
   )
 }
 
-/** Keeps the details mounted while they close, so their height can animate to 0 before they leave. */
-function useClosing(open: boolean) {
+function useMountedWhileClosing(open: boolean) {
   const [wasOpen, setWasOpen] = useState(open)
   const [closing, setClosing] = useState(false)
   if (wasOpen !== open) {
@@ -233,8 +227,7 @@ function useClosing(open: boolean) {
   return { mounted: open || closing, done: () => setClosing(false) }
 }
 
-/** Whether a pending commit just finished, so its node, time and tags ease in once. */
-function useFinished(status: Commit["status"]) {
+function useJustFinished(status: Commit["status"]) {
   const [previous, setPrevious] = useState(status)
   const [finished, setFinished] = useState(false)
   if (previous !== status) {
@@ -245,7 +238,6 @@ function useFinished(status: Commit["status"]) {
 }
 
 const easeIn = "transition duration-panel ease-standard starting:opacity-0"
-// The selected row reads as the current page in a nav: its fill and hairline, and a medium weight on its text.
 const selectedLine = "group-data-selected/commit:nav-current"
 // oxlint-disable-next-line shadcn/no-arbitrary-values -- text starts past the lanes of the row's first line, each --commit-lane wide
 const lineIndent = "ps-[calc(var(--commit-lane)*var(--indent)+var(--gap-inline))]"
@@ -255,6 +247,8 @@ const detailsIndent = "ps-[calc(var(--commit-lane)*var(--indent-below)+var(--gap
 const detailsRows = "grid-rows-[0fr] data-open:grid-rows-[1fr] data-open:starting:grid-rows-[0fr]"
 // oxlint-disable-next-line shadcn/no-arbitrary-values -- grid-template-rows isn't in the transition utilities
 const detailsTransition = "transition-[grid-template-rows]"
+const focusModeQuietRow =
+  "group-data-focus-mode/history:not-data-details-open:not-data-selected:not-hover:not-focus-within:text-muted-foreground"
 
 const CommitRow = memo(function CommitRow({
   commit,
@@ -272,8 +266,8 @@ const CommitRow = memo(function CommitRow({
   heads,
   unpushed = false,
 }: CommitRowProps) {
-  const details = useClosing(detailsOpen)
-  const finished = useFinished(commit.status)
+  const details = useMountedWhileClosing(detailsOpen)
+  const finished = useJustFinished(commit.status)
   const pending = commit.status === "pending"
   const { labels, now, locale, timeZone } = context
   const node: CommitNodeKind = pending ? "pending" : depth > 0 || lanes.tag !== 0 ? "branch" : "commit"
@@ -314,8 +308,7 @@ const CommitRow = memo(function CommitRow({
       className={cn(
         "group/commit flex flex-col outline-none",
         top === undefined ? "relative" : "absolute inset-x-0",
-        // Focus mode: every row but the open, hovered or focused one reads quieter, still at 4.5:1.
-        "group-data-focus-mode/history:not-data-details-open:not-data-selected:not-hover:not-focus-within:text-muted-foreground",
+        focusModeQuietRow,
         entering && "transition duration-panel ease-standard starting:-translate-y-1 starting:opacity-0",
       )}
       render={(props) => <div {...props} data-slot="commit-row" />}
@@ -397,9 +390,9 @@ const CommitRow = memo(function CommitRow({
               details.done()
               return
             }
-            // Details opened at the bottom edge would end below the fold; only a row someone is on scrolls.
             const row = event.currentTarget.closest<HTMLElement>("[data-slot=commit-row]")
-            if (row?.contains(document.activeElement)) row.scrollIntoView({ block: "nearest" })
+            const someoneIsOnRow = row?.contains(document.activeElement)
+            if (someoneIsOnRow) row?.scrollIntoView({ block: "nearest" })
           }}
         >
           <div className="min-h-0 overflow-hidden">

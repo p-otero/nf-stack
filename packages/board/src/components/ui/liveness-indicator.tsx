@@ -9,7 +9,7 @@ import { RelativeTime } from "@/components/ui/relative-time"
 import { StatusPill, type StatusTone } from "@/components/ui/status-pill"
 
 type LivenessLabels = Record<Liveness, string> & {
-  /** Precedes the time since the last activity, as in "last activity 47 minutes ago". */
+  /** Precedes the time since the last activity: "last activity 47 minutes ago". */
   lastActivity: string
 }
 

@@ -90,7 +90,7 @@ function AcceptanceList({
     "ul",
     {
       "data-slot": "acceptance-list",
-      // Preflight's list-style: none strips list semantics in Safari unless the role is explicit.
+      // Workaround: Safari drops list semantics under Preflight's list-style: none unless the role is explicit.
       role: "list",
       className: cn("flex flex-col gap-items text-sm", className),
       ...props,
@@ -182,15 +182,10 @@ type AcceptancePopoverProps = Omit<PopoverProps, "children"> & {
   formatSummary?: (counts: AcceptanceCounts) => string
   /** Classes for the trigger, a ghost button. */
   className?: string
-  /** Classes for the popover. */
   contentClassName?: string
 }
 
-/**
- * The acceptance summary for a header: a label, a thin bar and `n/m` as a button that opens the list of criteria
- * with their evidence. It opens on hover too, without moving focus; a press, Enter or a tap opens it and moves focus
- * in.
- */
+/** Opens on hover without moving focus; a press, Enter or a tap opens it and moves focus in. */
 function AcceptancePopover({
   criteria,
   labels,

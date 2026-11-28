@@ -31,8 +31,7 @@ function refOf(line: DiffLine, col: number, layout: DiffLayout): DiffLineRef {
   return { side, line: (side === "old" ? line.oldLine : line.newLine) ?? line.oldLine ?? 0 }
 }
 
-// Line numbers are drawn by CSS on the cell, so a press on them is one left of where the code starts.
-function onGutter(event: Event | undefined) {
+function pressedLeftOfCode(event: Event | undefined) {
   if (!(event instanceof MouseEvent) || !(event.target instanceof Element)) return false
   const code = event.target.closest('[role="gridcell"]')?.querySelector('[data-slot="diff-view-code"]')
   return Boolean(code && event.clientX < code.getBoundingClientRect().left)
@@ -41,8 +40,8 @@ function onGutter(event: Event | undefined) {
 const refuseNothing: SelectHandler = () => false
 
 /**
- * The lines selected for a comment: one line from a press on its number or Enter, a range in one file and on one
- * side with Shift. The anchor is kept by row key, so expanding a gap above it doesn't move the range.
+ * A range stays in one file and on one side. The anchor is kept by row key, so expanding a gap above it doesn't move
+ * the range.
  */
 function createLineSelection(source: SelectionSource) {
   let anchor: { key: string; col: number } | null = null
@@ -94,7 +93,7 @@ function createLineSelection(source: SelectionSource) {
     },
     moved(cell: GridCell, from: GridCell | null, shift: boolean, reason: GridFocusReason, event?: Event) {
       if (shift) select(from, cell, true, reason === "item-press" ? "item-press" : "list-navigation", event)
-      else if (reason === "item-press" && onGutter(event)) select(cell, cell, false, "item-press", event)
+      else if (reason === "item-press" && pressedLeftOfCode(event)) select(cell, cell, false, "item-press", event)
     },
   }
 }

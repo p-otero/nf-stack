@@ -53,7 +53,6 @@ interface AttemptEventOptions extends ThreadRendering {
   usageOpen: boolean
 }
 
-// The usage toggle sits in the title row and its table at the end, so one Collapsible spans the whole column.
 function AttemptColumn({
   collapsible,
   defaultOpen,

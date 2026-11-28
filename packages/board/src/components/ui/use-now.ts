@@ -30,7 +30,6 @@ function useNow({ now, intervalMs = 30_000 }: UseNowOptions = {}) {
       update()
       start()
     }
-    // The first render may come from the server, so resync once mounted.
     update()
     start()
     document.addEventListener("visibilitychange", onVisibilityChange)

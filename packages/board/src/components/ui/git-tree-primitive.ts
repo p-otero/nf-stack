@@ -5,10 +5,9 @@ import { parentsOf } from "@/lib/git-status"
 
 type GitTreeChangeReason = "item-press" | "trigger-press" | "list-navigation" | "find-in-page" | "imperative"
 
-/** How the primitive reads the tree without a copy of every path. */
 type GitTreeLookup = {
   kind: (path: string) => "file" | "folder" | undefined
-  /** Every path as agents list them: the path, and the row's name with its status. */
+  /** Every path as agents list them; `label` is the row's name with its status. */
   entries: () => readonly { value: string; label: string }[]
 }
 
@@ -40,8 +39,7 @@ const gitTree = definePrimitive({
   controlled: ["expanded"],
   api: (context) => {
     const change = createChange(context)
-    // The agent bridge passes arguments unchecked.
-    const check = (path: unknown, kind?: "file" | "folder") => {
+    const requireTreePath = (path: unknown, kind?: "file" | "folder") => {
       const found = typeof path === "string" ? context.options().lookup?.kind(path) : undefined
       if (!found || typeof path !== "string") throw new RangeError(`No path "${String(path)}" in the tree.`)
       if (kind && found !== kind) throw new RangeError(`"${path}" is a ${found}, not a ${kind}.`)
@@ -53,9 +51,9 @@ const gitTree = definePrimitive({
       setExpanded(expanded: readonly string[], options?: ChangeOptions<GitTreeChangeReason>) {
         return setExpanded([...expanded], options)
       },
-      /** Opens a folder with its parents, or a file through `onOpenFile`, opening the folders it is in first. */
+      /** A file goes to `onOpenFile` once the folders it is in are open. */
       open(path: string, options?: ChangeOptions<GitTreeChangeReason>) {
-        const target = check(path)
+        const target = requireTreePath(path)
         const kind = context.options().lookup?.kind(target)
         if (kind === "folder") return api.expand(target, options)
         const { expanded } = context.store.get()
@@ -65,13 +63,13 @@ const gitTree = definePrimitive({
         return settled(!dispatch(context, "onOpenFile", target, reasonOf(options)), "open", reasonOf(options))
       },
       expand(path: string, options?: ChangeOptions<GitTreeChangeReason>) {
-        const folder = check(path, "folder")
+        const folder = requireTreePath(path, "folder")
         const { expanded } = context.store.get()
         const missing = [...parentsOf(folder), folder].filter((open) => !expanded.includes(open))
         return missing.length === 0 ? true : setExpanded([...expanded, ...missing], options, "expand")
       },
       collapse(path: string, options?: ChangeOptions<GitTreeChangeReason>) {
-        const folder = check(path, "folder")
+        const folder = requireTreePath(path, "folder")
         const { expanded } = context.store.get()
         return expanded.includes(folder)
           ? setExpanded(

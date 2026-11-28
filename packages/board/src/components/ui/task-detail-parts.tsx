@@ -68,7 +68,6 @@ function DetailValue({
   )
 }
 
-// Escape inside a popup the panel holds (a reject confirmation, a tooltip) belongs to that popup.
 const headingTags = ["h1", "h2", "h3", "h4", "h5", "h6"] as const
 
 function insidePopup(target: EventTarget, panel: Element) {

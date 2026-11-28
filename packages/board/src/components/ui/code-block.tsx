@@ -26,7 +26,6 @@ import { ScrollArea, ScrollAreaCorner, ScrollAreaScrollbar, ScrollAreaViewport }
 import { cn } from "@/lib/utils"
 
 type CodeBlockLabels = {
-  /** The copy button's name. */
   copy: string
   /** Announced, and the button's name, for two seconds after copying. */
   copied: string
@@ -52,7 +51,6 @@ type CodeBlockProps = Omit<ComponentProps<"div">, "children" | "title" | "onCopy
   lineNumbers?: boolean
   /** One-based line numbers or inclusive ranges, marked with a fill and a start edge. */
   highlightLines?: readonly LineRange[]
-  /** Wraps long lines instead of scrolling sideways. */
   wrap?: boolean
   /** A CSS length, like "24rem"; the code scrolls inside past it. */
   maxHeight?: string
@@ -165,7 +163,6 @@ function CodeBlock({
         variant="ghost"
         size="icon"
         aria-label={copied ? labels.copied : labels.copy}
-        // The block's own copy action serves agents; the button would repeat it under a name shared by every block.
         data-agent-hidden=""
         className={cn("size-control-sm", !header && "absolute end-inline top-inline z-10 bg-muted")}
         onClick={(event) => handle.api.copy(event.nativeEvent)}
@@ -206,7 +203,6 @@ function CodeBlock({
           {!header && copyButton(copied)}
           <ScrollArea className="flex min-h-0 flex-col">
             <ScrollAreaViewport
-              // Code that scrolls takes focus so keyboard users can scroll it, also before it has been measured.
               tabIndex={scrolls ? 0 : undefined}
               render={(part) => <pre {...part} />}
               className={cn(
@@ -243,7 +239,6 @@ function CodeBlock({
 
 type CodeProps = ComponentProps<"code">
 
-/** Inline code inside running text. */
 function Code({ className, ...props }: CodeProps) {
   return (
     <code

@@ -4,7 +4,6 @@ import { useLayoutEffect, useRef, type RefObject } from "react"
 
 type Point = { x: number; y: number }
 
-// The first entry of a computed list like `transition-timing-function`, whose entries can hold commas of their own.
 function firstOf(list: string) {
   let depth = 0
   for (let index = 0; index < list.length; index++) {
@@ -23,7 +22,6 @@ function milliseconds(value: string) {
   return first.endsWith("ms") ? number : number * 1000
 }
 
-// Relative to the container, so scrolling the page between two moves doesn't read as movement.
 function where(el: HTMLElement, origin: DOMRect): Point {
   const rect = el.getBoundingClientRect()
   return { x: rect.left - origin.left, y: rect.top - origin.top }

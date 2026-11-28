@@ -33,7 +33,6 @@ import { cn } from "@/lib/utils"
 type GitTreeLabels = {
   /** Read after a changed file's name: "Modified". */
   status: Record<GitFileStatus, string>
-  /** The one-letter mark shown beside a changed file. */
   mark: Record<GitFileStatus, string>
   /** Read after a folder that holds changes. */
   changedFolder: string
@@ -49,25 +48,22 @@ const gitTreeLabels: GitTreeLabels = {
 }
 
 type GitTreeProps = Omit<PartProps<"div">, "children" | "onSelect" | "defaultValue"> & {
-  /** Names the tree, for screen readers and agents. */
   "aria-label": string
-  /** Every path at the commit, as strings or with a status; a path ending in `/` is an empty folder. */
+  /** A path ending in `/` is an empty folder. */
   files: readonly (string | GitTreeFile)[]
-  /** Open folders. By default the folders that hold a change start open. */
+  /** By default the folders that hold a change start open. */
   expanded?: readonly string[]
   defaultExpanded?: readonly string[]
   onExpandedChange?: GitTreeOptions["onExpandedChange"]
   /** The file shown elsewhere, like the one a diff is open on. */
   current?: string | null
-  /** Click or Enter on a file. */
   onOpenFile?: GitTreeOptions["onOpenFile"]
   labels?: Partial<GitTreeLabels>
-  /** A row's estimated height in px before it is measured. Default 32. */
+  /** A row's height in px before it is measured. @defaultValue 32 */
   estimateSize?: number
   /**
-   * Find in page reaches files and folders scrolled out of view, by name, through UI SDK's virtualizer and its
-   * findable layers, built once the page is idle after its first paint. Off by default: on 100,000 files it costs
-   * up to a frame on some held-arrow presses (p95 about 16 ms against 10 ms).
+   * Find in page reaches rows scrolled out of view, once the page is idle after its first paint. Off by default:
+   * on 100,000 files it costs up to a frame on some held-arrow presses (p95 about 16 ms against 10 ms).
    */
   findable?: boolean
 }
@@ -125,10 +121,8 @@ type GitTreeRowProps = {
   index: number
   expanded: boolean
   context: RowContext
-  /** Where the row sits in the tree's box while it's virtualized, in px. */
   top?: number
   measure?: (index: number, el: HTMLElement | null) => () => void
-  /** Fills the name, so find in page finds the row while it isn't rendered (`findableText`). */
   textSlot?: (index: number, el: HTMLElement | null) => () => void
 }
 
@@ -202,15 +196,12 @@ const GitTreeRow = memo(function GitTreeRow({
   )
 })
 
+const hiddenBehindGitTreeActions = { "data-agent-hidden": "" }
+
 function nameOf(path: string, file: GitTreeFile | undefined, labels: GitTreeLabels) {
   return file?.status ? `${path}, ${labels.status[file.status]}` : path
 }
 
-/**
- * A repository's files at a commit, folders first, with changed files marked by status (added, modified, deleted,
- * renamed) and folders that hold a change marked too. UI SDK's Tree underneath: arrows, typeahead, Left/Right to
- * close and open folders. Rows virtualize, so 100,000 files render only what's in view.
- */
 function GitTree({
   "aria-label": label,
   files,
@@ -295,8 +286,7 @@ function GitTree({
             <div ref={anchor} className="min-w-0">
               <Tree
                 aria-label={label}
-                // The tree's own expand and collapse would list every path a second time beside open, expand and collapse.
-                data-agent-hidden=""
+                {...hiddenBehindGitTreeActions}
                 items={items}
                 mode="none"
                 current={current ?? null}

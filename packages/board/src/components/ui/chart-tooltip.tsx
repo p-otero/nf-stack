@@ -11,7 +11,6 @@ import { isRecord } from "@/lib/narrow"
 
 type ChartIndicator = "dot" | "line" | "dashed"
 
-// Recharts clones the content with every Tooltip prop, so only these are read and nothing is spread onto the DOM.
 type ChartTooltipContentProps = ChartFormatOptions & {
   active?: boolean
   payload?: readonly TooltipPayloadEntry[]

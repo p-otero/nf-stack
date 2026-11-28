@@ -65,7 +65,6 @@ function reasonOf<Reason extends string>(options: unknown): { reason: Reason | "
   return { reason, event: event instanceof Event ? event : undefined }
 }
 
-// The agent bridge passes action arguments unchecked, so every action validates its own.
 const sameText = (a: string, b: string) => a.trim().localeCompare(b.trim(), undefined, { sensitivity: "base" }) === 0
 
 function checkStages(value: unknown, allowed: readonly string[], noStageLabel?: string): string[] | undefined {

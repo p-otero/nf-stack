@@ -41,7 +41,6 @@ type TaskDetailSectionProps = TaskDisplayOptions & {
   renderAttachments?: (task: TaskView) => ReactNode
   /** Replaces the stage track. */
   renderLocation?: (task: TaskView) => ReactNode
-  /** Heading level of the section. */
   headingLevel?: number
 }
 

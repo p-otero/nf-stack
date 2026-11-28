@@ -37,7 +37,6 @@ function CollapsibleIcon({ className, ...props }: ComponentProps<typeof ChevronD
   )
 }
 
-// Overflow is clipped only while the height animates, so focus rings inside an open panel stay visible.
 function CollapsiblePanel({ className, ...props }: ComponentProps<typeof CollapsiblePanelPrimitive>) {
   return (
     <CollapsiblePanelPrimitive

@@ -71,8 +71,7 @@ const agentTaskBoardLabelsEs: AgentTaskBoardLabels = {
 
 function resolveLabels(labels?: AgentTaskBoardLabelsInput): AgentTaskBoardLabels {
   if (!labels) return agentTaskBoardLabels
-  // The component labels are interfaces, which TypeScript won't take as the base file's loose
-  // `Record<string, Record<string, unknown>>`, though mergeLabels only copies them through.
+  // Workaround: TypeScript won't take the label interfaces as the loose `Record` mergeLabels copies through.
   return mergeLabels(baseLabels, assumeType<BaseLabelsInput>(labels)) as AgentTaskBoardLabels
 }
 

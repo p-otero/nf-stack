@@ -12,7 +12,6 @@ import { CheckIcon, MinusIcon } from "lucide-react"
 
 import { cnState } from "@/lib/utils"
 
-// Not rounded-control: in the default theme it turns the box into a circle that reads as a radio.
 function Checkbox({ className, ...props }: ComponentProps<typeof CheckboxPrimitive>) {
   return (
     <CheckboxPrimitive

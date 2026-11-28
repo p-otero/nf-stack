@@ -33,7 +33,7 @@ function ListGroup({ label, count, className, children }: ListGroupProps) {
     </>
   )
   if (context?.grid) {
-    // The label stays out of the rows, which a row group alone may hold; it names the group by reference.
+    // Spec: a rowgroup owns only rows, so the label is hidden and names the group by reference.
     return (
       <div
         // oxlint-disable-next-line jsx-a11y/prefer-tag-over-role -- a grid of flex rows, not a table

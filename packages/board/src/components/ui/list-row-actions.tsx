@@ -152,7 +152,6 @@ function ListRowActionRoots({
 }
 
 const revealClassNames = {
-  // Shown while the row is hovered, holds focus or is selected; a coarse pointer has no hover, so it always shows.
   hover:
     "pointer-fine:opacity-0 pointer-fine:group-hover/list-item:opacity-100 pointer-fine:group-focus-within/list-item:opacity-100 pointer-fine:group-data-selected/list-item:opacity-100 transition-opacity duration-micro ease-standard",
   always: "",
@@ -190,7 +189,6 @@ function RowActionButton({
     tooltip: reason === undefined ? undefined : `${name} (${reason})`,
     className: cn(action.tone === "destructive" && "text-destructive hover:text-destructive"),
     onClick,
-    // UI SDK's Button keeps its own data-slot over a prop; the rendered element's props win.
     render: action.href ? (
       // oxlint-disable-next-line jsx-a11y/anchor-has-content -- the Button renders its icon or label into it
       <a

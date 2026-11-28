@@ -16,7 +16,6 @@ import { TabsScroll, type TabsScrollLabels } from "@/components/ui/tabs-scroll"
 import { cn, cnState } from "@/lib/utils"
 import { assumeType } from "@/lib/narrow"
 
-// Set only while activateOnPress is on: the controller a tab selects through on pointerdown.
 const TabsPressContext = createContext<TabsController | null>(null)
 
 type TabsProps<T extends string = string> = ComponentProps<typeof TabsPrimitive<T>> & {
@@ -30,7 +29,7 @@ type TabsProps<T extends string = string> = ComponentProps<typeof TabsPrimitive<
 function Tabs<T extends string = string>({ className, activateOnPress = false, controller, ...props }: TabsProps<T>) {
   const [ownController] = useState(() => createTabsController<T>())
   const active = controller ?? ownController
-  // UI SDK types a tab's `value` as a string, so the tabs below select through a controller of strings; each of them
+  // Workaround: UI SDK types a tab's `value` as a string, so the tabs below select through a controller of strings; each of them
   // passes its own value, one of this Tabs' `T`.
   const pressController = activateOnPress ? assumeType<TabsController>(active) : null
   return (
@@ -45,11 +44,8 @@ function Tabs<T extends string = string>({ className, activateOnPress = false, c
 }
 
 const tabsListClassName =
-  "relative inline-flex w-fit items-center rounded-control bg-muted p-control-inset text-muted-foreground data-[orientation=vertical]:flex-col data-[orientation=vertical]:items-stretch"
+  "relative inline-flex w-fit items-center rounded-control bg-muted/(--control-glass-opacity) p-control-inset glass-control glass-control-edge text-muted-foreground data-[orientation=vertical]:flex-col data-[orientation=vertical]:items-stretch"
 
-// A scrolling list clips on both axes, so a tab's focus ring drops its offset to fit inside the list's rim.
-// The fades are masks over the list itself, so they work on any surface; each side's width is 0 until it overflows.
-// The scroll padding is the fade's width, so a tab TabsScroll reveals lands clear of it.
 const scrollClassName = [
   // oxlint-disable-next-line eskais/scroll-area -- a scrolling tab list hides its scrollbar on purpose: edge fades and scroll buttons stand for it
   "max-w-full overflow-x-auto overscroll-x-contain [--tabs-fade:2.5rem] scroll-px-(--tabs-fade) [scrollbar-width:none] [&::-webkit-scrollbar]:hidden [&_[data-slot=tabs-tab]]:focus-visible:ring-offset-0",
@@ -82,11 +78,10 @@ function TabsList({ className, scrollable = "auto", scrollLabels, ...props }: Ta
   )
 }
 
-// A solid primary fill on muted, so the selected tab reads at 3:1 rather than as a faint tint.
+// Spec: a solid primary fill on muted, so the selected tab reads at 3:1 (WCAG 1.4.11).
 function TabsTab({ className, onPointerDown, ...props }: ComponentProps<typeof TabsTabPrimitive>) {
   const pressController = use(TabsPressContext)
-  // Selecting on press is allowed by WCAG 2.5.2 (Pointer Cancellation) because it's reversible: pressing another
-  // tab undoes it. It goes through the controller, so onValueChange, cancel() and controlled values still apply.
+  // Spec: selecting on press is allowed by WCAG 2.5.2 (Pointer Cancellation) because pressing another tab undoes it.
   const selectOnPress = (event: PointerEvent<HTMLButtonElement>) => {
     onPointerDown?.(event)
     if (!pressController || event.defaultPrevented || event.button !== 0 || event.pointerType === "touch") return
@@ -96,7 +91,7 @@ function TabsTab({ className, onPointerDown, ...props }: ComponentProps<typeof T
     <TabsTabPrimitive
       onPointerDown={selectOnPress}
       className={cnState(
-        "touch-target inline-flex h-control-sm shrink-0 cursor-pointer items-center justify-center gap-inline rounded-control px-control-x text-sm font-medium whitespace-nowrap transition-colors outline-none select-none hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-muted data-disabled:cursor-not-allowed data-disabled:opacity-50 data-disabled:hover:text-muted-foreground data-selected:bg-primary data-selected:text-primary-foreground data-selected:hover:text-primary-foreground [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0",
+        "touch-target inline-flex h-control-sm shrink-0 cursor-pointer items-center justify-center gap-inline rounded-control px-control-x text-sm font-medium whitespace-nowrap transition-colors outline-none select-none hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-muted data-disabled:cursor-not-allowed data-disabled:opacity-50 data-disabled:hover:text-muted-foreground data-selected:bg-primary data-selected:text-primary-foreground data-selected:glass-control data-selected:hover:text-primary-foreground [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0",
         className,
       )}
       {...props}

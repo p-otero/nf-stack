@@ -14,13 +14,11 @@ function openModals() {
   try {
     modals.push(...document.querySelectorAll("dialog:modal"))
   } catch {
-    // Engines without :modal (jsdom) still see modals by aria-modal.
+    // Workaround: engines without :modal (jsdom) still see modals by aria-modal.
   }
   return modals.filter((modal) => !modal.hasAttribute("data-ending-style"))
 }
 
-// A closing dialog gives focus back only from inside itself, or from <body> when no other modal is open. Another
-// modal opened meanwhile (one of ours or another library's, which may move focus in a frame later) keeps it.
 function mayReturnFocus(own: Element | null, active: Element | null = focusedElement()) {
   if (active) return own?.contains(active) ?? false
   return !openModals().some((modal) => modal !== own && !own?.contains(modal))

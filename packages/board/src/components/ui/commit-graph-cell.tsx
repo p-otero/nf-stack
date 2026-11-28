@@ -15,9 +15,8 @@ type CommitGraphCellProps = {
   drawIn?: boolean
 }
 
-// Curves are drawn in a lane 14 units wide and a line 30 units tall, the default theme's sizes, and stretch to
-// the theme's. Straight runs are boxes rather than SVG: Chrome doesn't repaint a stretched SVG's
-// non-scaling strokes when the row resizes, which left gaps between rows.
+// Workaround: Chrome doesn't repaint a stretched SVG's non-scaling strokes when the row resizes, which left gaps
+// between rows, so only curves are SVG (in the default theme's 14 by 30 cell) and straight runs are boxes.
 const LANE = 14
 const LINE = 30
 const x = (lane: number) => (lane + 0.5) * LANE
@@ -49,8 +48,6 @@ function runsOf({ lane, into, out, through, tagsTop, tagsBottom }: LaneRow): Run
   return runs
 }
 
-// A lane's colour by its tag: the link blue for the base or a lone trail, the categorical chart colours for
-// branches, a tone when a branch asks for one. Never the only cue: branch lanes carry a pill with the name.
 const laneColors: Record<number, string> = {
   0: "text-link",
   1: "text-chart-1",
@@ -89,16 +86,12 @@ const nodeClassNames: Record<CommitNodeKind, string> = {
     "size-3 border-[1.5px] border-current border-e-transparent bg-card animate-spin motion-reduce:animate-none motion-reduce:border-e-current",
 }
 
-/** The columns a row's graph takes: its lanes, and two more for "+N" when some aren't drawn. */
+/** A row's lanes, plus two for "+N" when some aren't drawn. */
 function graphColumns(row: LaneRow) {
   return row.width + (row.hidden > 0 || row.nodeHidden ? 2 : 0)
 }
 
-/**
- * One row of the graph: lanes passing by, edges into and out of the row's node, and the lanes that run on below
- * its first line, through its open details. Lanes past the row's cap show as "+N". It is decorative: the row's
- * name says what the graph shows.
- */
+/** Lanes past the row's cap show as "+N". Decorative: the row's name says what the graph shows. */
 const CommitGraphCell = memo(function CommitGraphCell({ row, node, finished, drawIn }: CommitGraphCellProps) {
   const { lane, width, into, out, tagsTop, tagsBottom, hidden, nodeHidden } = row
   const curvesIn = into.filter((from) => from !== lane)

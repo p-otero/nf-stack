@@ -39,7 +39,6 @@ function useMirror<Value>(controlled: Value | undefined, initial: Value) {
   return [controlled === undefined ? own : controlled, setOwn] as const
 }
 
-// Stable between renders, so a virtualized table's find-in-page stubs re-render only when the rows change.
 function useVisibleRows<Row>(
   rows: readonly Row[],
   columns: DataTableProps<Row>["columns"],
@@ -124,7 +123,6 @@ function DataTable<Row>({
     getKey: keyAt,
   })
 
-  // Stable, so a memoized row re-renders only when its own row, selection or position changes.
   const toggleRow = useCallback(
     (id: string, checked?: boolean, event?: Event) => controller.toggleRows([id], checked, { reason: "press", event }),
     [controller],

@@ -7,7 +7,7 @@ import type { ComponentProps } from "react"
 import { cnState } from "@/lib/utils"
 import { Toggle, ToggleIcon, toggleVariants } from "@/components/ui/toggle"
 
-// UI SDK's ToggleGroup doesn't join a Field on its own, so it does through the field's public custom-control hook.
+// Workaround: UI SDK's ToggleGroup doesn't join a Field on its own; it does through the field's custom-control hook.
 function ToggleGroup<T extends string = string>({
   className,
   disabled,

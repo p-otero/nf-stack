@@ -45,7 +45,6 @@ type BranchModel = {
 
 const TONES: readonly Tone[] = ["neutral", "info", "success", "warning", "destructive", "violet"]
 
-/** The same name always gets the same of the five chart colours. */
 function nameTag(name: string) {
   let hash = 0
   for (let at = 0; at < name.length; at += 1) hash = (hash * 31 + name.charCodeAt(at)) >>> 0
@@ -126,8 +125,6 @@ function createBranchModel(
     if (info.state === "active" || info.state === "stale") pending.push({ info, rows })
   }
 
-  // Five colours for any number of branches: each takes its name's, or the next one no other branch has yet, in
-  // name order, so the same branches keep the same colours and up to five never share one.
   const taken = new Set<number>()
   for (const { info } of pending.toSorted((a, b) => (a.info.name < b.info.name ? -1 : 1))) {
     if (info.tone) continue

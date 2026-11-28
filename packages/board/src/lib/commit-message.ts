@@ -1,6 +1,6 @@
 import { isMergeRow, rowOfCommit, type Commit, type CommitGraph, type CommitMessageSegment } from "@/lib/commit-graph"
 
-// Git's own merge subjects: "Merge branch 'a' into b", "Merge a into b", "Merge pull request #1 from a/b".
+// Spec: git's own merge subjects: "Merge branch 'a' into b", "Merge a into b", "Merge pull request #1 from a/b".
 const mergeSubject = /^Merge (?:(?:remote-tracking )?branch(?:es)? )?'?([\w./@-]+)'?(?: of \S+)? into '?([\w./@-]+)'?$/
 const pullSubject = /^(Merge pull request #\d+ from )([\w./@-]+)$/
 const ticks = /`([^`\n]+)`/g
@@ -65,11 +65,10 @@ function segmentText(segment: CommitMessageSegment) {
   }
 }
 
-/** The subject in the pieces a row shows it in: each segment's text, chips as their names, for find in page. */
 const pieces = new WeakMap<object, readonly string[]>()
 
 function subjectPieces(commit: Pick<Commit, "message">): readonly string[] {
-  // Find in page asks for every row's pieces when it builds and again as rows scroll; parse each message once.
+  // Perf: find in page asks for every row's pieces when it builds and again as rows scroll.
   let found = pieces.get(commit)
   if (!found) {
     found = segmentsOf(commit).map(segmentText)

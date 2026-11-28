@@ -11,32 +11,33 @@ type AgentAvatars = Record<string, { src?: string; icon?: ReactNode; label?: str
 
 const AVATAR_TINTS = 8
 
-// Tints under foreground text, never solid fills under white: every chart color keeps the initials readable in both schemes.
+// Spec: WCAG 1.4.3 — tints under foreground text, never solid fills under white, keep the initials readable in both schemes.
 const tintClassName =
   "data-[tint=0]:bg-chart-1/20 data-[tint=0]:inset-ring-chart-1/50 data-[tint=1]:bg-chart-2/20 data-[tint=1]:inset-ring-chart-2/50 data-[tint=2]:bg-chart-3/20 data-[tint=2]:inset-ring-chart-3/50 data-[tint=3]:bg-chart-4/20 data-[tint=3]:inset-ring-chart-4/50 data-[tint=4]:bg-chart-5/25 data-[tint=4]:inset-ring-chart-5/60 data-[tint=5]:bg-info/15 data-[tint=5]:inset-ring-info/40 data-[tint=6]:bg-success/15 data-[tint=6]:inset-ring-success/40 data-[tint=7]:bg-warning/15 data-[tint=7]:inset-ring-warning/40"
 
-// FNV-1a: stable across sessions and runtimes, so a provider keeps its color in every snapshot.
-function hashString(text: string) {
+function spreadLowBits(hash: number) {
+  let spread = hash ^ (hash >>> 16)
+  spread = Math.imul(spread, 0x7feb352d)
+  spread ^= spread >>> 15
+  spread = Math.imul(spread, 0x846ca68b)
+  spread ^= spread >>> 16
+  return spread >>> 0
+}
+
+function stableFnv1aHash(text: string) {
   let hash = 0x811c9dc5
   for (let index = 0; index < text.length; index++) {
     hash ^= text.charCodeAt(index)
     hash = Math.imul(hash, 0x01000193)
   }
-  // FNV's low bits barely differ for similar ids; a finalizer spreads them so codex and claudeAgent get different colors.
-  hash ^= hash >>> 16
-  hash = Math.imul(hash, 0x7feb352d)
-  hash ^= hash >>> 15
-  hash = Math.imul(hash, 0x846ca68b)
-  hash ^= hash >>> 16
-  return hash >>> 0
+  return spreadLowBits(hash)
 }
 
-/** A stable index in [0, count) for a key, so a provider or a label keeps its color everywhere. */
+/** In [0, count), the same for a key on every run and runtime. */
 function colorIndex(key: string, count: number) {
-  return hashString(key) % count
+  return stableFnv1aHash(key) % count
 }
 
-/** Which of the provider colors an agent's initials sit on. */
 function agentAvatarTint(provider: string) {
   return colorIndex(provider, AVATAR_TINTS)
 }
@@ -53,7 +54,7 @@ function agentInitials(name: string) {
   return word.charAt(0).toUpperCase() + word.slice(1, 2).toLowerCase()
 }
 
-/** The provider's display name: the consumer's label for it, or its id. */
+/** The label in `avatars`, or the provider id. */
 function providerName(provider: string, avatars?: AgentAvatars) {
   return avatars?.[provider]?.label ?? provider
 }
@@ -92,7 +93,6 @@ function AgentAvatar({ agent, avatars, label, size = "xs", className, ...props }
   )
 }
 
-/** Where a task has no agent yet. */
 function UnassignedAvatar({ className }: { className?: string }) {
   return (
     <span

@@ -16,9 +16,11 @@ const buttonVariants = cva(
     variants: {
       variant: {
         default: "bg-primary text-primary-foreground hover:bg-primary/90",
-        secondary: "bg-secondary text-secondary-foreground hover:bg-secondary/80",
-        outline: "border border-input bg-background/(--glass-opacity) hover:bg-accent hover:text-accent-foreground",
-        ghost: "hover:bg-accent hover:text-accent-foreground",
+        secondary:
+          "bg-secondary/(--control-glass-opacity) text-secondary-foreground glass-control glass-control-edge hover:bg-secondary/80",
+        outline:
+          "border border-control-edge bg-background/(--glass-opacity) glass-control hover:bg-accent hover:text-accent-foreground",
+        ghost: "hover:bg-accent hover:text-accent-foreground hover:glass-control",
         destructive: "bg-destructive text-destructive-foreground hover:bg-destructive/90",
         link: "text-link underline-offset-4 hover:underline",
       },
@@ -100,10 +102,7 @@ const overlaySpinnerVariants = cva("absolute inset-0 m-auto", {
   defaultVariants: { variant: "default" },
 })
 
-// A leading icon is swapped for the spinner, so the width holds; text stays a direct child under a centered one (Chrome
-// drops text in a wrapper from a busy button's name). Triggers that take `buttonVariants` and `data-pending` use it
-// too. The spinner renders only while `busy`, so a thousand idle buttons carry no SVG; a caller that can't tell
-// leaves it true and lets `data-pending` show it.
+/** Renders the spinner only while `busy`; a caller that can't tell leaves it true and lets `data-pending` show it. */
 function withSpinner(children: ReactNode, iconOnly: boolean, variant: ButtonVariants["variant"], busy = true) {
   const items = Children.toArray(children)
   const leadingIcon = isValidElement(items[0]) && (items.length > 1 || iconOnly)
@@ -111,6 +110,7 @@ function withSpinner(children: ReactNode, iconOnly: boolean, variant: ButtonVari
   if (busy && leadingIcon) spinner = <Spinner data-show="pending" />
   else if (busy)
     spinner = <Spinner data-show="pending" data-overlay="" className={overlaySpinnerVariants({ variant })} />
+  // Workaround: Chrome drops text in a wrapper from a busy button's name, so the text stays a direct child.
   return (
     <>
       {spinner}
@@ -160,7 +160,7 @@ function Button({
     <ButtonPrimitive
       ref={(node: HTMLElement | null) => {
         element.current = node
-        // `render` can make the button a link or any element, which UI SDK's ref, typed for a <button>, still receives.
+        // Workaround: UI SDK types the ref for a <button>, though `render` can make the button any element.
         if (typeof ref === "function") return ref(assumeType<HTMLButtonElement | null>(node))
         if (ref) (ref as { current: unknown }).current = node
         return undefined
