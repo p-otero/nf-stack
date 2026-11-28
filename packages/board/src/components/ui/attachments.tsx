@@ -43,15 +43,13 @@ type AttachmentStripProps = Omit<PartProps<"div">, "children" | "onSelect"> & {
   size?: AttachmentSize
   labels?: Partial<AttachmentLabels>
   locale?: string
-  /** Names the strip, for screen readers and agents. */
   "aria-label": string
 }
 
 const focusRing =
   "outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
 
-// Data attributes aren't in the part's prop type, so they come in through a spread.
-function rootAttributes(size: AttachmentSize) {
+function untypedRootDataAttributes(size: AttachmentSize) {
   return { "data-slot": "attachment-strip", "data-size": size }
 }
 
@@ -66,8 +64,7 @@ function AttachmentStrip({
   ...props
 }: AttachmentStripProps) {
   const labels = { ...attachmentLabels, ...labelOverrides }
-  // The scroll area's viewport renders the list, so the ref is typed as its div.
-  const list = useRef<HTMLDivElement>(null)
+  const listViewport = useRef<HTMLDivElement>(null)
   const [expanded, setExpanded] = useState(false)
   const [viewer, setViewer] = useState({ open: false, index: 0, id: "" })
   const images = useMemo<LightboxItem[]>(
@@ -97,7 +94,7 @@ function AttachmentStrip({
     <>
       <ScrollArea className="-m-inline min-w-0">
         <ScrollAreaViewport
-          ref={list}
+          ref={listViewport}
           className="flex h-auto items-center gap-items overscroll-x-contain p-inline"
           render={(part) => <ul {...part} data-slot="attachment-list" />}
         >
@@ -126,7 +123,7 @@ function AttachmentStrip({
                 onClick={() => {
                   flushSync(() => setExpanded(true))
                   const first = attachments[max ?? 0]
-                  list.current
+                  listViewport.current
                     ?.querySelector<HTMLElement>(`[data-attachment-id="${CSS.escape(first?.id ?? "")}"]`)
                     ?.focus()
                 }}
@@ -151,7 +148,8 @@ function AttachmentStrip({
           open={viewer.open}
           onOpenChange={(open) => setViewer((current) => ({ ...current, open }))}
           finalFocus={() =>
-            list.current?.querySelector<HTMLElement>(`[data-attachment-id="${CSS.escape(viewer.id)}"]`) ?? undefined
+            listViewport.current?.querySelector<HTMLElement>(`[data-attachment-id="${CSS.escape(viewer.id)}"]`) ??
+            undefined
           }
           labels={labels.lightbox}
         />
@@ -163,7 +161,7 @@ function AttachmentStrip({
     handle,
     "root",
     {},
-    { ...props, ...rootAttributes(size), className: cn("flex min-w-0", className), children },
+    { ...props, ...untypedRootDataAttributes(size), className: cn("flex min-w-0", className), children },
     "div",
   )
 }

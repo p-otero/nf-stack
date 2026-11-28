@@ -86,7 +86,6 @@ function TaskDetailDialog({
   labels = agentTaskBoardLabels,
   ...content
 }: TaskDetailDialogProps) {
-  // Keeps the last task on screen while the dialog animates out.
   const [shown, setShown] = useState(task)
   if (task && task !== shown) setShown(task)
   const current = task ?? shown

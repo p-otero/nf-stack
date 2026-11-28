@@ -15,8 +15,6 @@ function defaultText(item: unknown) {
 
 type ChildRow = ReactElement<{ id?: unknown; title?: unknown }>
 
-// Flat rows given as children, each with a string `id` (`<ListItem id>`), are the list's data too, so they
-// virtualize like `items`. Anything else, like a ListGroup, keeps rendering as it is.
 function childRowsOf(children: ReactNode): ChildRow[] | undefined {
   const all = Children.toArray(children)
   if (all.length === 0) return undefined
@@ -28,7 +26,6 @@ function childRowsOf(children: ReactNode): ChildRow[] | undefined {
   return rows
 }
 
-// Rows reach these as the list's data, typed `unknown`; `childRowsOf` made each one, with a string `id`.
 const childId = (row: unknown) => (isValidElement<ChildRow["props"]>(row) ? String(row.props.id) : "")
 const childText = (row: unknown) => {
   if (!isValidElement<ChildRow["props"]>(row)) return ""
@@ -42,14 +39,13 @@ function defaultId(item: unknown) {
   return String(item)
 }
 
-const listboxKeys: Record<string, string> = { j: "ArrowDown", k: "ArrowUp" }
+const arrowForLetterKey: Record<string, string> = { j: "ArrowDown", k: "ArrowUp" }
 
-// The listbox moves with arrows; j and k are the same moves, and the page keys jump by a screen of options.
 function listboxKeyDown(event: KeyboardEvent<HTMLElement>, setValue: (id: string) => void) {
   if (event.altKey || event.ctrlKey || event.metaKey || !(event.target instanceof HTMLElement)) return
   const option = event.target.closest<HTMLElement>('[role="option"]')
   if (!option) return
-  const arrow = listboxKeys[event.key]
+  const arrow = arrowForLetterKey[event.key]
   if (arrow) {
     event.preventDefault()
     event.stopPropagation()

@@ -10,9 +10,7 @@ import { TaskDetailPanel, type CloseReason } from "@/components/ui/task-detail-p
 
 type AgentTaskBoardDetailProps = {
   presentation: DetailPresentation
-  /** The toolbar and summary above the board. */
   header: ReactNode
-  /** The board or table. */
   children: ReactNode
   bodyRef: Ref<HTMLDivElement>
   selected: TaskView | undefined
@@ -42,11 +40,11 @@ function AgentTaskBoardDetail({
   renderLocation,
 }: AgentTaskBoardDetailProps) {
   const threads = { renderThreadLink, onOpenThread, renderLink, renderAttachments, renderLocation }
+  const boardIsBehindModal = selected !== undefined
   if (presentation !== "side") {
     return (
       <>
-        {/* People can't reach the board behind a modal, so agents don't see its controls either; the board's own actions still work. */}
-        <div data-agent-hidden={selected ? "" : undefined} className="flex flex-col gap-section">
+        <div data-agent-hidden={boardIsBehindModal ? "" : undefined} className="flex flex-col gap-section">
           {header}
           <div ref={bodyRef}>{children}</div>
         </div>

@@ -20,8 +20,7 @@ type SyntaxSpan = { from: number; to: number; tone: SyntaxTone }
 
 type SideSource = {
   text: string
-  /** Offset of each line in `text`, by line number. */
-  starts: Map<number, number>
+  offsetByLineNumber: Map<number, number>
   tree?: Tree
   parsing?: boolean
   spans: Map<number, readonly SyntaxSpan[]>
@@ -29,31 +28,32 @@ type SideSource = {
 
 const languageOf = (file: DiffViewFile) => normalizeLanguage(file.language)
 
-// Parsing yields to the page after this long, so a 20,000-line file never blocks a frame.
+// Perf: parsing yields to the page after this long, so a 20,000-line file never blocks a frame.
 const SLICE_MS = 8
 const MAX_LINE = 2000
 
 function sourceOf(file: DiffViewFile, side: DiffSide): SideSource {
   const full = side === "old" ? file.oldLines : file.newLines
-  const starts = new Map<number, number>()
+  const offsetByLineNumber = new Map<number, number>()
   const parts: string[] = []
   let offset = 0
   const add = (number: number, text: string) => {
-    starts.set(number, offset)
+    offsetByLineNumber.set(number, offset)
     parts.push(text)
     offset += text.length + 1
   }
   if (full) full.forEach((text, index) => add(index + 1, text))
-  else {
-    // From a patch alone, a side is the hunks' lines in order: enough context for most constructs.
-    for (const hunk of file.diff.hunks) {
-      for (const line of hunk.lines) {
-        const number = side === "old" ? line.oldLine : line.newLine
-        if (number !== undefined && line.kind !== (side === "old" ? "added" : "removed")) add(number, line.text)
-      }
+  else forEachHunkLineOfSide(file, side, add)
+  return { text: parts.join("\n"), offsetByLineNumber, spans: new Map() }
+}
+
+function forEachHunkLineOfSide(file: DiffViewFile, side: DiffSide, add: (number: number, text: string) => void) {
+  for (const hunk of file.diff.hunks) {
+    for (const line of hunk.lines) {
+      const number = side === "old" ? line.oldLine : line.newLine
+      if (number !== undefined && line.kind !== (side === "old" ? "added" : "removed")) add(number, line.text)
     }
   }
-  return { text: parts.join("\n"), starts, spans: new Map() }
 }
 
 function schedule(task: () => void) {
@@ -79,13 +79,19 @@ function parseInSlices(parser: Parser, source: SideSource, done: () => void) {
   schedule(step)
 }
 
+type DiffSyntax = {
+  /** `null` while the line's side parses, `[]` for a language without a parser. */
+  spans: (file: DiffViewFile, line: DiffLine, side: DiffSide) => readonly SyntaxSpan[] | null
+  /** Changes when a parse of this file finishes or a parser loads. */
+  version: (file: DiffViewFile) => number
+  dispose: () => void
+}
+
 /**
- * Syntax tones for the lines a diff shows, made only when a line renders: each side of a file parses once, in
- * slices between frames, the first time one of its lines is on screen, and each line is highlighted from the
- * tree on its own. `onReady` runs when a parse finishes, so the visible rows can render again in colour; only the
- * rows of a file whose `version` changed need to.
+ * Each side of a file parses once, in slices between frames, the first time one of its lines renders. `onReady` runs
+ * when a parse finishes; only the rows of a file whose `version` changed need to render again.
  */
-function createDiffSyntax(onReady: () => void) {
+function createDiffSyntax(onReady: () => void): DiffSyntax {
   const sources = new WeakMap<DiffViewFile, Partial<Record<DiffSide, SideSource>>>()
   const versions = new WeakMap<DiffViewFile, number>()
   const pendingLanguages = new Set<CodeLanguage>()
@@ -128,7 +134,6 @@ function createDiffSyntax(onReady: () => void) {
     parseInSlices(parser, entry, () => ready(file))
   }
 
-  /** The tones of a line, `null` while its side parses, `[]` for a language without a parser. */
   function spans(file: DiffViewFile, line: DiffLine, side: DiffSide): readonly SyntaxSpan[] | null {
     const language = languageOf(file)
     if (language === "plaintext" || language === "diff" || language === "bash" || language === "sh") return []
@@ -142,7 +147,7 @@ function createDiffSyntax(onReady: () => void) {
       if (!entry.parsing) startParse(file, side, entry)
       return null
     }
-    const from = entry.starts.get(number)
+    const from = entry.offsetByLineNumber.get(number)
     if (from === undefined) return []
     const to = from + line.text.length
     const out: SyntaxSpan[] = []
@@ -162,15 +167,12 @@ function createDiffSyntax(onReady: () => void) {
 
   return {
     spans,
-    /** Changes when a parse of this file finishes or a parser loads. */
     version: (file: DiffViewFile) => epoch * 1_000_000 + (versions.get(file) ?? 0),
     dispose() {
       disposed = true
     },
   }
 }
-
-type DiffSyntax = ReturnType<typeof createDiffSyntax>
 
 export { createDiffSyntax }
 export type { DiffSide, DiffSyntax, SyntaxSpan }

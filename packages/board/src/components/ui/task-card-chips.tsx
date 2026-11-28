@@ -67,7 +67,6 @@ function TaskCardChips({
   const parts = labels.components
   const attempt = activeAttempt(task)
   const liveness = attempt?.liveness !== "finished" ? attempt?.liveness : undefined
-  // Running and idle are routine: a dot is enough. Waiting and stuck need a person, so they say so.
   const livenessShown = liveness === "waiting_input" || liveness === "suspect_dead"
   const livenessName = liveness && (parts.liveness?.[liveness] ?? livenessLabels[liveness])
   const livenessEvidence = livenessShown ? attempt?.livenessEvidence : undefined

@@ -101,7 +101,7 @@ function formatElapsed(value: Instant, options: Pick<FormatRelativeOptions, "now
   const key = `${options.locale ?? ""}|${unit}`
   let format = elapsedFormats.get(key)
   if (!format) {
-    // English narrows both minutes and months to "m"; months keep the short form.
+    // Spec: English narrows both minutes and months to "m".
     const unitDisplay = unit === "month" ? "short" : "narrow"
     format = new Intl.NumberFormat(options.locale, { style: "unit", unit, unitDisplay })
     elapsedFormats.set(key, format)

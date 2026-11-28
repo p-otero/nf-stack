@@ -65,7 +65,7 @@ type LightboxProps = {
   finalFocus?: ComponentProps<typeof DialogContent>["finalFocus"]
   labels?: Partial<LightboxLabels>
   className?: string
-  /** A `DialogTrigger`, or anything else that belongs inside the dialog root. */
+  /** Rendered inside the dialog root, like a `DialogTrigger`. */
   children?: ReactNode
 }
 
@@ -204,8 +204,7 @@ function LightboxView({ items, index, onIndexChange, labels }: ViewProps) {
   )
 }
 
-// Mounts with the content, so the content sits in the part of the page you can see, as a DialogContent does.
-function ViewportBox({ contentRef }: { contentRef: RefObject<HTMLElement | null> }) {
+function KeepContentInVisualViewport({ contentRef }: { contentRef: RefObject<HTMLElement | null> }) {
   useVisualViewportBox(contentRef)
   return null
 }
@@ -236,7 +235,6 @@ function Lightbox({
         ref={contentRef}
         finalFocus={finalFocus}
         render={<div data-slot="lightbox" />}
-        // Never a bottom sheet: a sheet fits its content, and the image stage has no height of its own.
         className={cn(
           dialogContentVariants({ size: "full", sheet: false }),
           "max-w-6xl gap-0 overflow-hidden p-0",
@@ -254,7 +252,7 @@ function Lightbox({
             }}
           />
         )}
-        <ViewportBox contentRef={contentRef} />
+        <KeepContentInVisualViewport contentRef={contentRef} />
       </DialogContent>
     </Dialog>
   )

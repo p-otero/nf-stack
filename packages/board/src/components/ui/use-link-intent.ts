@@ -2,8 +2,7 @@
 
 import { useRef, type PointerEvent } from "react"
 
-/** How long a mouse rests on a link before it counts as intent, as instant.page does. */
-const hoverDwell = 65
+const hoverDwellMs = 65
 
 /**
  * Handlers that call `onIntent(href)` when someone is about to follow the link: the mouse rests on it for 65 ms, it
@@ -19,7 +18,7 @@ function useLinkIntent(href: string | undefined, onIntent: ((href: string) => vo
   }
   return {
     onPointerEnter: (event: PointerEvent<HTMLElement>) => {
-      if (event.pointerType === "mouse") timer.current = setTimeout(fire, hoverDwell)
+      if (event.pointerType === "mouse") timer.current = setTimeout(fire, hoverDwellMs)
     },
     onPointerLeave: () => clearTimeout(timer.current),
     onPointerDown: (event: PointerEvent<HTMLElement>) => {

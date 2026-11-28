@@ -70,7 +70,7 @@ function splitTransfer<Props extends BoardTransferOptions>(props: Props) {
       delete rest[key]
     }
   }
-  // The loop deletes exactly `transferKeys`; TypeScript can't follow a `delete` on a generic object.
+  // Workaround: TypeScript can't follow a `delete` of exactly `transferKeys` on a generic object.
   return { transfer, rest: assumeType<Omit<Props, (typeof transferKeys)[number]>>(rest) }
 }
 

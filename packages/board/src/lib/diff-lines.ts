@@ -9,6 +9,7 @@ type LineDiff = {
   headingAbove: (lines: readonly string[], oldStart: number) => string | undefined
 }
 
+// oxlint-disable unicorn/consistent-function-scoping -- a Web Worker runs the factory below from its source, so every helper lives inside it
 /**
  * Line diffs and hunks over a sequence diff. Self-contained like `createSequenceDiff`, which it takes as its only
  * input, so a Web Worker can run both from their source.
@@ -32,8 +33,8 @@ function createLineDiff(sequence: SequenceDiff): LineDiff {
 
   const blank = (line: string | undefined) => line === undefined || line.trim() === ""
 
-  // Where an inserted or deleted block could sit anywhere along a run of repeated lines, prefer the place that
-  // starts after a blank line, ends on one and begins at the shallowest indent; on a tie, the lowest, like git.
+  // Spec: git's slider rule: a block that could sit anywhere along a run of repeated lines goes after a blank line,
+  // ends on one and begins at the shallowest indent; on a tie, the lowest.
   function score(lines: readonly string[], start: number, size: number) {
     let total = 0
     if (blank(lines[start - 1])) total += 10
@@ -158,7 +159,7 @@ function createLineDiff(sequence: SequenceDiff): LineDiff {
       const out = new Int32Array(lines.length)
       for (let i = 0; i < lines.length; i++) {
         let key = normalize(lines[i]!, mode)
-        // A last line without a newline differs from the same text with one, as git shows it.
+        // Spec: a last line without a newline differs from the same text with one, as git shows it.
         if (open && i === lines.length - 1) key += "\u0000"
         let id = ids.get(key)
         if (id === undefined) {
@@ -224,7 +225,6 @@ function createLineDiff(sequence: SequenceDiff): LineDiff {
       if (index >= lines.length) break
       const start = Math.max(0, index - context)
       let end = index
-      // A hunk runs on while the next change is within two contexts of the last one.
       for (let scan = index; scan < lines.length; scan++) {
         if (lines[scan]!.kind !== "context") end = scan + 1
         else if (scan - end + 1 > context * 2) break
@@ -255,7 +255,6 @@ function createLineDiff(sequence: SequenceDiff): LineDiff {
     return { status: "ok", hunks, additions, deletions, oldLineCount: a.length, newLineCount: b.length }
   }
 
-  // The line number a hunk that opens with an addition (or a removal) starts at on the other side.
   function firstOld(lines: DiffLine[], from: number) {
     for (let k = from; k < lines.length; k++) if (lines[k]!.oldLine !== undefined) return lines[k]!.oldLine!
     for (let k = from - 1; k >= 0; k--) if (lines[k]!.oldLine !== undefined) return lines[k]!.oldLine! + 1

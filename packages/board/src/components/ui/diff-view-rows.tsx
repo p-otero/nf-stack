@@ -40,14 +40,13 @@ const gutterClass = {
 
 const changedClass = { added: "bg-diff-added-strong", removed: "bg-diff-removed-strong", context: "" } as const
 
-// Gutters as wide as the highest line number, then the sign and the code.
 // oxlint-disable-next-line shadcn/no-arbitrary-values -- columns sized from --diff-number, set from the document
 const splitColumns = "grid-cols-[var(--diff-number)_2ch_1fr]"
 // oxlint-disable-next-line shadcn/no-arbitrary-values -- columns sized from --diff-number, set from the document
 const unifiedColumns = "grid-cols-[var(--diff-number)_var(--diff-number)_2ch_1fr]"
 
-// Line numbers are the cell's ::before (and ::after for the new side in unified), from data attributes: two
-// elements fewer per line, which a 500-file scroll mounts by the thousand. A press on them selects the line.
+// Perf: line numbers are the cell's ::before and ::after, from data attributes: two elements fewer per line, which a
+// 500-file scroll mounts by the thousand.
 const oldNumber =
   // oxlint-disable-next-line shadcn/no-arbitrary-values -- the gutter's text comes from the cell's data-old attribute
   "before:content-[attr(data-old)] before:cursor-pointer before:px-inline before:text-end before:tabular-nums before:select-none"
@@ -59,8 +58,11 @@ const sign = { added: "+", removed: "-", context: " " } as const
 
 const noSpans: readonly SyntaxSpan[] = []
 
-/** Splits a line at its syntax and changed-word boundaries, so each piece takes one tone and one highlight. */
-function pieces(text: string, spans: readonly SyntaxSpan[], changed: IntralineRanges | null) {
+function splitAtToneAndHighlightBoundaries(
+  text: string,
+  spans: readonly SyntaxSpan[],
+  changed: IntralineRanges | null,
+) {
   const cuts = new Set<number>([0, text.length])
   for (const span of spans) cuts.add(span.from).add(span.to)
   for (const [from, to] of changed ?? []) cuts.add(from).add(to)
@@ -87,10 +89,6 @@ type CodeProps = {
   findable: boolean
 }
 
-/**
- * The colours sit in an `aria-hidden` layer under the line's own text, which is transparent: find in page and
- * selection highlight that text, and the virtualizer can move a match into it (`findableText`).
- */
 function Code({ api, file, line, partner, index, part, findable }: CodeProps) {
   const document = api.document
   const side = line.kind === "removed" ? "old" : "new"
@@ -103,7 +101,7 @@ function Code({ api, file, line, partner, index, part, findable }: CodeProps) {
   return (
     <span data-slot="diff-view-code" className="grid min-w-0 ps-inline">
       <span aria-hidden="true" className="col-start-1 row-start-1">
-        {pieces(line.text, spans, changed).map((piece) => (
+        {splitAtToneAndHighlightBoundaries(line.text, spans, changed).map((piece) => (
           <span
             key={piece.from}
             className={cn(
@@ -190,10 +188,7 @@ function LineCell({ api, file, rowIndex, rowKey, col, line, partner, labels, fin
   )
 }
 
-/**
- * The one side an added or deleted file has in split layout, 1 (new) or 0 (old), or null when it has both. That
- * side takes the whole width: an empty half would push the code against the far edge and scroll it sideways.
- */
+/** 1 (new) or 0 (old) for an added or deleted file, whose one side takes the whole split width; null for both sides. */
 function loneSide(file: DiffViewFile): 0 | 1 | null {
   if (file.diff.status === "added") return 1
   if (file.diff.status === "deleted") return 0
@@ -222,7 +217,6 @@ type GapCellProps = {
 
 function GapCell({ api, file, fileIndex, rowIndex, rowKey, gap, labels, findable }: GapCellProps) {
   const document = api.document
-  // The hidden lines stay in the row as hidden="until-found" text: a match opens the gap.
   const hidden = useCallback(
     (el: HTMLElement | null) => {
       if (!el || !findable || !gap.expandable) return
@@ -271,20 +265,16 @@ type RowProps = {
   row: DiffRow
   index: number
   start: number
-  /** The row's height while it isn't measured: unwrapped rows have a fixed one. */
   size: number
   wrap: boolean
-  /** Where the row sits in its file's grid, from 1. */
   position: number
   file: DiffViewFile
   labels: DiffLabels
   findable: boolean
   split: boolean
-  /** Changes when this file's parse finishes, so the row renders in colour. */
   syntax: number
 }
 
-/** One line (unified), one pair (split) or one gap of the diff, absolutely placed by the virtualizer. */
 const DiffViewRow = memo(function DiffViewRow({
   api,
   row,
@@ -302,9 +292,8 @@ const DiffViewRow = memo(function DiffViewRow({
     (el: HTMLElement | null) => (wrap && row.kind !== "gap" ? api.document.virtual.measure(index, el) : undefined),
     [api, index, wrap, row.kind],
   )
-  // Gap rows keep their fixed height when lines wrap.
-  const fixed = !wrap || row.kind === "gap"
-  const style: CSSProperties = fixed ? { top: start, height: size } : { top: start }
+  const keepsFixedHeight = !wrap || row.kind === "gap"
+  const style: CSSProperties = keepsFixedHeight ? { top: start, height: size } : { top: start }
   let cells: ReactNode = null
   if (row.kind === "gap") {
     cells = (

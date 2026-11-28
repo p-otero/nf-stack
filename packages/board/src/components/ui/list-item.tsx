@@ -17,8 +17,7 @@ import { useListItemRegistration, useTruncated } from "@/components/ui/use-list-
 import type { Tone } from "@/lib/tone"
 import { cn } from "@/lib/utils"
 
-// A row paints only inside itself (`contain-content`): moving focus repaints that row, not the rows around it. Its
-// focus ring is drawn inset for that reason. A card keeps its shadow and selection ring outside, so it isn't contained.
+// Perf: contain-content, so moving focus repaints only one row.
 const rowClassNames = {
   row: "rounded-control contain-content hover:bg-accent/60 data-checked:bg-accent/60 data-selected:bg-accent data-selected:text-accent-foreground",
   card: "rounded-lg border bg-card/(--glass-opacity) text-card-foreground shadow-surface backdrop-surface hover:border-ring data-selected:border-ring data-selected:bg-accent data-selected:text-accent-foreground data-selected:ring-3 data-selected:ring-ring/25",
@@ -28,6 +27,8 @@ const stretchedClassNames = {
   row: "after:rounded-control focus-visible:after:ring-inset",
   card: "after:rounded-lg",
 } satisfies Record<ListVariant, string>
+
+type ListItemEmphasis = "muted" | "strong"
 
 const toneClassNames = {
   neutral: "bg-neutral-soft text-neutral-soft-foreground",
@@ -80,8 +81,6 @@ function ListItemMeta({ className, render, ...props }: PartProps<"div">) {
   )
 }
 
-// Above the stretched link or button, so each action stays its own target. On a narrow row, the trailing
-// content and the actions wrap onto their own line instead of squeezing the title.
 function ListItemActions({ className, render, ...props }: PartProps<"div">) {
   return renderElement(
     "div",
@@ -94,9 +93,16 @@ function ListItemActions({ className, render, ...props }: PartProps<"div">) {
   )
 }
 
+function followWithoutSelectingAgain(primary: HTMLElement) {
+  primary.setAttribute("data-selecting", "")
+  primary.click()
+}
+
 type ListItemProps = {
   id: string
   title: string
+  /** A control before the content, like a checkbox that selects the row; ignored in a selectable List. */
+  control?: ReactNode
   leading?: ReactNode
   subtitle?: ReactNode
   /** A StatusPill; on a narrow row it wraps below the title instead of squeezing it. */
@@ -115,6 +121,8 @@ type ListItemProps = {
   onSelect?: () => void
   /** Overrides the List's variant. */
   variant?: ListVariant
+  /** `muted` fades the row's text, like a read message; `strong` sets it in a medium weight, like an unread one. */
+  emphasis?: ListItemEmphasis
   /** The checkbox's name in a list with `checkedIds`; English by default. */
   checkLabel?: string
   className?: string
@@ -123,6 +131,7 @@ type ListItemProps = {
 function ListItem({
   id,
   title,
+  control,
   leading,
   subtitle,
   status,
@@ -133,6 +142,7 @@ function ListItem({
   href,
   onSelect,
   variant: variantProp,
+  emphasis,
   checkLabel,
   className,
 }: ListItemProps) {
@@ -141,7 +151,6 @@ function ListItem({
   const variant = variantProp ?? context?.variant ?? "row"
   const grid = useListGrid()
   const rowActions = useRowActions()
-  // In a grid, a selectable row is a row of the grid, not a listbox option, and its primary cell selects it.
   const option = (context?.selectable ?? false) && !grid
   const gridSelects = grid !== null && (context?.selectable ?? false)
   const [titleNode, setTitleNode] = useState<HTMLElement | null>(null)
@@ -151,9 +160,7 @@ function ListItem({
   useListItemRegistration(context?.register, id, title, option, () => {
     if (href) {
       if (!primary) return false
-      // Marks the click as already selected, so the link only follows itself.
-      primary.setAttribute("data-selecting", "")
-      primary.click()
+      followWithoutSelectingAgain(primary)
       return true
     }
     if (!onSelect) return false
@@ -192,16 +199,13 @@ function ListItem({
   }
   const element: ReactElement<Record<string, unknown>> = href
     ? createElement("a", { href, ...primaryProps })
-    : // UI SDK's Button keeps its own data-slot over a prop; the rendered element's props win.
-      createElement(Button, {
+    : createElement(Button, {
         ...primaryProps,
         render: (props: ComponentProps<"button">) => <button {...props} data-slot="list-item-primary" />,
       } as Record<string, unknown>)
   let heading: ReactNode = titleText
   if (pressable) {
-    // The root and trigger are always mounted, so the trigger keeps its element (and focus) when the title starts
-    // or stops fitting. The content, most of a tooltip's components, mounts only while the title is cut off: most
-    // rows fit, and a tooltip per row was a third of a long list's components.
+    // Perf: tooltip content mounts only while the title is cut off.
     heading = (
       <Tooltip type="label" disabled={!truncated}>
         {grid ? (
@@ -214,7 +218,6 @@ function ListItem({
     )
   }
   const checked = option ? undefined : context?.checked
-  // Space and x on the row toggle it, so the box stays out of the tab order instead of adding a stop per row.
   const checkbox = checked && (
     <span className="relative z-10 flex min-h-lh shrink-0 items-center">
       <Checkbox
@@ -240,6 +243,7 @@ function ListItem({
       <div className="flex min-w-0 grow basis-60 items-start gap-items">
         {handle}
         {checkbox}
+        {control && !option && <span className="relative z-10 flex min-h-lh shrink-0 items-center">{control}</span>}
         {leading && (
           <span
             data-slot="list-item-leading"
@@ -277,6 +281,8 @@ function ListItem({
   const rowClassName = cn(
     "group/list-item relative flex min-w-0 flex-wrap items-start gap-items px-inset-item py-inset-item transition-colors duration-micro ease-standard",
     variant === "card" ? rowClassNames.card : rowClassNames.row,
+    emphasis === "muted" && "text-muted-foreground",
+    emphasis === "strong" && "font-medium",
     className,
   )
 
@@ -359,5 +365,5 @@ function ListItem({
 
 export { IconTile, ListItem, ListItemActions, ListItemMeta, ListItemTitle }
 export { List, ListGroup }
-export type { ListItemProps }
+export type { ListItemEmphasis, ListItemProps }
 export type { ListGroupProps, ListProps, ListVariant }

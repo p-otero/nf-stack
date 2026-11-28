@@ -80,7 +80,6 @@ function ProgressTrack({ className, children, ...props }: ComponentProps<typeof 
   )
 }
 
-// Indeterminate has no width to show, so the whole track pulses; reduced motion keeps it still.
 function ProgressIndicator({ className, ...props }: ComponentProps<typeof ProgressIndicatorPrimitive>) {
   return (
     <ProgressIndicatorPrimitive

@@ -27,7 +27,7 @@ function opensKeyboard(target: EventTarget | null) {
 
 const viewportProperties = ["--dialog-viewport-top", "--dialog-viewport-bottom", "--dialog-viewport-height"]
 
-// Writes the visual viewport for CSS to place against the containing block, not `innerHeight` (stale on iOS 26).
+// Workaround: writes the visual viewport for CSS to place against the containing block, not `innerHeight` (stale on iOS 26).
 // Toolbars also shorten the visible part, where UI SDK's `data-keyboard` (beta.12) misfires, so `data-dialog-keyboard`
 // also needs a focused field. Pinch-zoomed, the visual viewport is a window into the page: the last box stays.
 function useVisualViewportBox(contentRef: RefObject<HTMLElement | null>, parentClassName?: string) {
@@ -35,9 +35,8 @@ function useVisualViewportBox(contentRef: RefObject<HTMLElement | null>, parentC
     const viewport = window.visualViewport
     if (!viewport) return undefined
     let pageScale = 1
-    // Read on every update: a content rendered through `render` can attach its ref after this effect runs.
     let written: HTMLElement | null = null
-    // With `parentClassName`, the box and the classes go on the parent (a Drawer's viewport). Its `!` classes outrank
+    // Perf: with `parentClassName`, the box and the classes go on the parent (a Drawer's viewport). Its `!` classes outrank
     // the inline `--keyboard-inset` UI SDK lays it out from, before UI SDK measures; a rule on the content would need
     // `:has()`, which makes every DOM change on the page check ancestors again.
     const classes = parentClassName?.split(" ").filter(Boolean) ?? []

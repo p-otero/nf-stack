@@ -32,7 +32,7 @@ type DiffViewController = {
   currentFile: () => string | null | undefined
 }
 
-/** A handle to drive a DiffView from outside it, like a file list beside it: pass it as `controller`. */
+/** Pass it as `controller`. */
 function createDiffViewController() {
   return createController<DiffViewController>()
 }
@@ -86,11 +86,6 @@ function typing(target: EventTarget | null) {
   return target instanceof HTMLElement && (target.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(target.tagName))
 }
 
-/**
- * A virtualized diff of one or many files: every file's rows in one list under one virtualizer, one tab stop over
- * the lines (createGridFocus), j/k and n/p between hunks and files, Shift ranges for comments, and find in page
- * through the virtualizer's findable layers, which also opens a collapsed gap or file it matches.
- */
 const step = <Result>(result: Result | null, action: string, why: string) => result ?? unavailable(action, why)
 
 const diffView = definePrimitive({
@@ -120,7 +115,6 @@ const diffView = definePrimitive({
     viewed: options.viewed ?? options.defaultViewed ?? ([] as readonly string[]),
     collapsed: options.defaultCollapsed ?? ([] as readonly string[]),
     active: null as GridCell | null,
-    /** Selected cells, as `${rowKey}#${col}`. */
     selected: [] as readonly string[],
     version: 0,
   }),
@@ -163,9 +157,9 @@ const diffView = definePrimitive({
       const done = settled(change("viewed", next, { reason: event ? "press" : "imperative", event }), "markViewed", {
         event,
       })
-      // A file marked viewed folds away, as on a code review page; unmarking opens it again.
-      if (context.store.get().viewed.includes(file.path) === (viewed !== false))
-        document.setCollapsed(file.path, viewed !== false)
+      const marking = viewed !== false
+      const markApplied = context.store.get().viewed.includes(file.path) === marking
+      if (markApplied) document.setCollapsed(file.path, marking)
       return done
     }
 
@@ -178,15 +172,15 @@ const diffView = definePrimitive({
       setLayout,
       setWrap,
       markViewed,
-      /** Brings a file into view, opening it if it was collapsed. */
+      /** Opens the file if it was collapsed. */
       openFile: (path: unknown) => document.openFile(path),
       toggleFile: (path: unknown, open?: unknown) => document.toggleFile(path, open),
       nextHunk: () => step(document.stepHunk(1), "nextHunk", "isn't available: no hunk after this one"),
       previousHunk: () => step(document.stepHunk(-1), "previousHunk", "isn't available: no hunk before this one"),
       nextFile: () => step(document.stepFile(1), "nextFile", "isn't available: no file after this one"),
       previousFile: () => step(document.stepFile(-1), "previousFile", "isn't available: no file before this one"),
-      /** One hunk's lines, read-only: `n` counts from 0 within the file. */
-      getHunk: (path: unknown, n: unknown) => document.hunk(path, n),
+      /** Read-only; the index counts from 0 within the file. */
+      getHunk: (path: unknown, hunkIndexInFile: unknown) => document.hunk(path, hunkIndexInFile),
       expandGap: (path: unknown, gap: unknown) => document.expand(path, gap),
       clearSelection: () => document.select(null, null, false, "imperative"),
       currentFile: () => document.currentFile(),

@@ -29,7 +29,6 @@ function rangesOf(tokens: string[], changed: (index: number) => boolean) {
       if (last && last[1] === offset) last[1] = end
       else ranges.push([offset, end])
     } else if (/^\s$/.test(token) && changed(index - 1) && changed(index + 1)) {
-      // One space between two changed words reads as one change.
       const last = ranges.at(-1)
       if (last && last[1] === offset) last[1] = end
     }

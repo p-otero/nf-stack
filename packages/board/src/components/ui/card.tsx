@@ -20,7 +20,7 @@ type CardSurface = "card" | "none" | "dashed"
 const cardVariants = cva("flex flex-col gap-group text-card-foreground", {
   variants: {
     surface: {
-      card: "rounded-surface border bg-card/(--glass-opacity) py-inset-surface field-label-surface-card shadow-surface backdrop-surface",
+      card: "rounded-surface border bg-card/(--glass-opacity) py-inset-surface field-label-surface-card glass-sheen shadow-surface backdrop-surface",
       dashed: "rounded-surface border border-dashed py-inset-surface",
       none: "[&>[data-slot^=card-]]:px-0",
     },
@@ -33,7 +33,6 @@ type CardProps = PartProps<"section"> & {
   surface?: CardSurface
 }
 
-// A titled card is a named region; the title registers its id after mount, so the section is always the same element.
 function Card({ className, render, children, surface = "card", ...props }: CardProps) {
   const [titleId, setTitleId] = useState<string>()
   return (
@@ -58,9 +57,6 @@ const CardEyebrow = part("card-eyebrow", "text-meta tracking-meta text-muted-for
 
 const CardAction = part("card-action", "flex max-w-full min-w-0 flex-wrap items-center gap-items")
 
-// With an action, the header is a wrapping row: the heading (eyebrow, title, description) grows from a basis of
-// --card-heading-basis, so the action wraps below it as soon as the heading would get narrower than that, whatever
-// the action's width. A CardAction must be a direct child.
 function CardHeader({ className, render, children, ...props }: PartProps<"div">) {
   const parts = typeof children === "function" ? [] : Children.toArray(children)
   const actions = parts.filter((child) => isValidElement(child) && child.type === CardAction)

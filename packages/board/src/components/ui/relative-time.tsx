@@ -37,7 +37,7 @@ function RelativeTime({
       dateTime: toISO(value),
       title: formatInstant(value, { locale, timeZone }),
       className: cn("tabular-nums", className),
-      // Server and browser differ in clock and time zone; the effect in useNow resyncs the text.
+      // Spec: server and browser differ in clock and time zone; the effect in useNow resyncs the text.
       suppressHydrationWarning: true,
       ...props,
       children: formatRelative(value, { now: current, locale, style: formatStyle }),

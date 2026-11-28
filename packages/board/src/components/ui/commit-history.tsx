@@ -48,7 +48,6 @@ import type { Instant } from "@/lib/time"
 import { cn } from "@/lib/utils"
 
 type CommitHistoryProps = Omit<PartProps<"div">, "children" | "onSelect"> & {
-  /** Names the history, for screen readers and agents. */
   "aria-label": string
   /** Newest first, children before parents: the order of `git log --topo-order`. */
   commits: readonly Commit[]
@@ -141,11 +140,7 @@ const trailWidths = "[--commit-history-height:40rem] [--commit-lane:0.875rem]"
 // oxlint-disable-next-line shadcn/no-arbitrary-values -- a row's line at the reference frame's density, a touch target's height on a coarse pointer
 const trailLine = "[--commit-line:1.875rem] pointer-coarse:[--commit-line:var(--control-height-touch)]"
 
-/**
- * A commit trail, one line per commit: a graph lane per line of history, merges collapsed to one row whose
- * merged commits open on a side lane, and a commit's details inline under its row. Rows virtualize, the lanes
- * are laid out lazily from the top, and appending older pages costs only the new rows.
- */
+/** Merges collapse to one row whose merged commits open on a side lane; a commit's details open under its row. */
 function CommitHistory({
   "aria-label": label,
   commits,
@@ -259,7 +254,6 @@ function CommitHistory({
   const openDetails = useMemo(() => new Set(state.details), [state.details])
   const workingTreeLabel = workingTree ? (workingTree.label ?? labels.workingTree) : undefined
   const items = useMemo(() => treeItemsOf(graph, workingTreeLabel), [graph, workingTreeLabel])
-  // The working-tree row comes before the commits' rows in the tree's order.
   const rowOffset = workingTree ? 1 : 0
 
   const commitAt = useCallback((index: number) => graph.commits[visible.rows[index]!]!, [graph, visible])
@@ -273,7 +267,6 @@ function CommitHistory({
     findable,
   })
 
-  // Stable, so the memoized branch select doesn't render its branches again on every move.
   const focusBranch = useCallback(
     (name: string | null) => handle.api.focusBranch(name, { reason: "item-press" }),
     [handle],
@@ -314,7 +307,6 @@ function CommitHistory({
   }, [model])
 
   const selectable = selected !== undefined || defaultSelected !== undefined || onSelect !== undefined
-  // The selection as the press found it: a press on the row already selected opens it rather than selecting it.
   const selectedAtPress = useRef<string | null>(null)
   const notePress = () => {
     selectedAtPress.current = state.selected
@@ -352,7 +344,6 @@ function CommitHistory({
         onFocus?.(event)
         if (!virtual.virtual || !(event.target instanceof Element)) return
         const index = Number(event.target.closest<HTMLElement>("[data-index]")?.dataset.index ?? Number.NaN)
-        // The working-tree row isn't one of the virtualized rows: focus on it lets go of the pinned one.
         virtual.pin(Number.isNaN(index) ? undefined : index)
       },
       children: (
@@ -377,7 +368,6 @@ function CommitHistory({
               <div className="min-w-0">
                 <Tree
                   aria-label={label}
-                  // The history's own actions serve agents by commit; the tree would list every row a second time.
                   data-agent-hidden=""
                   items={items}
                   mode={selectable ? "single" : "none"}
@@ -394,17 +384,13 @@ function CommitHistory({
                   expanded={state.expanded as string[]}
                   onExpandedChange={(next, change) =>
                     handle.api.setExpanded(next, {
-                      // Tree also reports "find-in-page", which CommitHistoryChangeReason doesn't name yet; it is
-                      // passed through unchanged, as before.
+                      // Workaround: Tree also reports "find-in-page", which CommitHistoryChangeReason doesn't name; it passes through.
                       reason: assumeType<CommitHistoryChangeReason>(change.reason),
                       event: change.event,
                     })
                   }
                   onAction={(id, { event }) => {
-                    // A press inside a commit's details, like its copy button, is not a press on the row.
                     if (event?.target instanceof Element && event.target.closest("[data-slot=commit-details]")) return
-                    // A press on a branch's pill shows only that branch, or every branch again when it's the one shown.
-                    // Scoped to the pill's slot: the root carries `data-branch` too, for the branch it shows.
                     const pill =
                       event?.target instanceof Element
                         ? event.target.closest<HTMLElement>("[data-slot=commit-branch-pill][data-branch]")
@@ -433,7 +419,6 @@ function CommitHistory({
                 >
                   {workingTree && <WorkingTreeRow workingTree={workingTree} labels={labels} locale={locale} />}
                   <div
-                    // The rows' offset in the scroller is read when they mount: a working-tree row above them moves it.
                     key={workingTree ? "below-working-tree" : "rows"}
                     ref={anchor}
                     style={virtual.absolute ? { height: virtual.height } : undefined}

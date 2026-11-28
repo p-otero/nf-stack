@@ -2,8 +2,6 @@ import type { ImgHTMLAttributes } from "react"
 
 import { cn } from "@/lib/utils"
 
-// The theme's dark rule, spelled out: `.dark` on an ancestor, or the system preference unless the page opted out.
-// A consumer's `dark:` variant may only follow `.dark`, so these don't rely on it.
 const lightOnlyClassName =
   "[:where(.dark)_&]:hidden [@media(prefers-color-scheme:dark)]:[:root:not(.light,[data-color-scheme=light])_&]:hidden"
 const darkOnlyClassName =

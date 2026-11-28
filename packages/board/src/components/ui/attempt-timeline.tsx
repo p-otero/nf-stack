@@ -23,7 +23,7 @@ type AttemptTimelineProps = Omit<ComponentProps<typeof Timeline>, "children"> &
     usageOpenUpTo?: number
   }
 
-// Ids like "T-014-A1" read as "A1" inside their task; anything else is shown whole.
+/** "T-014-A1" → "A1"; any other id stays whole. */
 function defaultFormatAttemptId(id: string) {
   return /-(A\d+)$/.exec(id)?.[1] ?? id
 }
@@ -75,7 +75,6 @@ function AttemptTimeline({
   }
   const event = (attempt: AttemptView) => <AttemptEvent key={attempt.id} attempt={attempt} {...options} />
 
-  // The earlier attempts sit in a panel inside the same list, so arrow keys run through every attempt once open.
   const timeline = (
     <Timeline aria-label={text.timeline} className={cn("flex flex-col", className)} {...props}>
       {hiddenCount > 0 && (

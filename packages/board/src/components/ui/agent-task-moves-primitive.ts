@@ -23,7 +23,6 @@ type AgentTaskMovesOptions = {
 function stateOf(options: AgentTaskMovesOptions) {
   const approval = options.agentApproval ?? "confirm"
   const agentConfirm = approval === "confirm" ? options.agentConfirm || undefined : undefined
-  // Without a sentence to show, "confirm" can't ask a person, so the action stays hidden rather than run unasked.
   const askable = approval === "allow" || agentConfirm !== undefined
   return {
     available: askable && Boolean(options.onMoveTask) && (options.statuses?.length ?? 0) > 0,
@@ -46,7 +45,6 @@ const agentTaskMoves = definePrimitive({
   api: (context) => {
     const tasks = () => context.options().tasks ?? []
     return {
-      // The agent bridge passes arguments unchecked.
       moveTask(id: unknown, status: unknown, index?: unknown, options?: ChangeOptions<TaskMoveReason>) {
         if (!context.store.get().available) throw new Error("Tasks can't be moved on this board now.")
         const task = tasks().find((candidate) => candidate.id === id)

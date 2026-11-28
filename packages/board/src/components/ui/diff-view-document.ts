@@ -58,7 +58,7 @@ type DocumentContext = Pick<
 
 const preferredCol = (row: DiffRow) => (row.kind === "pair" && row.right ? 1 : 0)
 
-/** The state behind a DiffView: rows, the virtualizer, syntax, selection and moves. One per instance. */
+/** One per DiffView instance. */
 function createDiffDocument(context: DocumentContext) {
   const build = createDocumentBuilder()
   const expanded = new Map<string, Set<number>>()
@@ -71,8 +71,7 @@ function createDiffDocument(context: DocumentContext) {
   let grid: GridFocus | null = null
   let viewport: HTMLElement | null = null
   let scroll: DiffScroll | null = null
-  // The rows' offset in the element that scrolls them: 0 in the diff's own viewport.
-  let margin = 0
+  let rowsOffsetInScroller = 0
   let currentFile: string | null = null
   let onCurrent: ((path: string | null, reason: "scroll" | "imperative") => void) | null = null
   let metrics = defaultMetrics
@@ -95,7 +94,7 @@ function createDiffDocument(context: DocumentContext) {
     key: (index) => doc.rows[index]?.key ?? String(index),
     overscan: 10,
     get scrollMargin() {
-      return margin
+      return rowsOffsetInScroller
     },
     keep: () => {
       const active = context.store.get().active
@@ -160,7 +159,6 @@ function createDiffDocument(context: DocumentContext) {
     rebuild()
   })
 
-  /** The file at the top of the viewport: its header or lines are the first rows in view. */
   function fileInView() {
     const top = scroll?.top() ?? 0
     const item = virtual.items().find((entry) => entry.start + entry.size > top)
@@ -178,14 +176,15 @@ function createDiffDocument(context: DocumentContext) {
     if (viewport) setCurrent(fileInView(), "scroll")
   })
 
-  // A match of find in page in a closed gap or a collapsed file opens it, so the browser can show the text.
-  virtual.subscribe(() => {
+  function openRowHidingFindInPageMatch() {
     const found = virtual.items().find((item) => item.found)
     const row = found ? doc.rows[found.index] : undefined
     if (row?.kind === "gap" && row.gap.expandable) expandGap(row.file, row.gap.id)
     else if (row?.kind === "file" && collapsedSet.has(files[row.file]!.path)) setCollapsed(files[row.file]!.path, false)
     else publish()
-  })
+  }
+
+  virtual.subscribe(openRowHidingFindInPageMatch)
 
   function file(path: unknown) {
     const found = files.find((entry) => entry.path === path)
@@ -206,7 +205,6 @@ function createDiffDocument(context: DocumentContext) {
     const path = files[fileIndex]!.path
     const open = expanded.get(path) ?? new Set<number>()
     if (open.has(gap)) return
-    // A new set, so the builder sees the file's signature change.
     expanded.set(path, new Set([...open, gap]))
     rebuild()
   }
@@ -260,10 +258,9 @@ function createDiffDocument(context: DocumentContext) {
         metrics = next
         virtual.reset()
       }
-      // The viewport is dir="ltr" for the code; headers follow the page's direction through this variable.
       el.style.setProperty("--diff-page-direction", getComputedStyle(el.parentElement ?? el).direction)
       const connection = connectDiffScroll(el, virtual, findable, (offset) => {
-        margin = offset
+        rowsOffsetInScroller = offset
       })
       scroll = connection.scroll
       setCurrent(fileInView(), "scroll")
@@ -278,7 +275,6 @@ function createDiffDocument(context: DocumentContext) {
         scroll = null
       }
     },
-    /** Changed words of a line against the line it pairs with, cached per pair. */
     intraline(line: DiffLine, partner: DiffLine | undefined) {
       const mode = context.options().intraline ?? "word"
       if (!partner || mode === false || line.kind === "context") return null

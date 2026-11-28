@@ -27,7 +27,6 @@ type Repository = {
   name: string
   /** Where it lives, shown beside the name in the list: "~/work/acme/api". */
   path?: string
-  /** The branch checked out. */
   branch?: string
   /** Files with uncommitted changes. */
   uncommitted?: number
@@ -73,11 +72,9 @@ type RepositorySelectProps = {
   size?: SelectSize
   labels?: Partial<RepositorySelectLabels>
   triggerProps?: Omit<SelectTriggerProps, "children">
-  /** Classes for the list. */
   contentClassName?: string
 }
 
-/** A repository's state as badges: uncommitted, ahead, behind, no remote, or up to date when none apply. */
 function RepositoryState({ repository, labels }: { repository: Repository; labels: RepositorySelectLabels }) {
   const { uncommitted = 0, ahead, behind, remote } = repository
   const badges: ReactNode[] = []

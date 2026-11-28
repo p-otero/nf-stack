@@ -13,7 +13,6 @@ type CommitHistoryChangeReason = "item-press" | "trigger-press" | "list-navigati
 
 type CommitLookupEntry = { id: string; hash: string; subject: string; merge: boolean }
 
-/** How the primitive finds commits without holding a copy of a long history. */
 type CommitLookup = {
   /** A commit by id, hash (or a prefix of 4 or more characters) or exact subject. */
   find: (ref: string) => CommitLookupEntry | undefined
@@ -23,7 +22,6 @@ type CommitLookup = {
   branches?: () => readonly CommitBranchSummary[]
 }
 
-/** A branch as agents read it: where its head is and how far it is from the base. */
 type CommitBranchSummary = {
   name: string
   head: string
@@ -131,7 +129,6 @@ const commitHistory = definePrimitive({
     let timer: ReturnType<typeof setTimeout> | undefined
     context.onDestroy(() => clearTimeout(timer))
 
-    // The agent bridge passes arguments unchecked.
     const find = (ref: unknown) => {
       const entry = typeof ref === "string" ? context.options().lookup?.find(ref) : undefined
       if (!entry) throw new RangeError(`No commit "${String(ref)}". Pass a commit's id, hash or subject.`)
@@ -155,7 +152,7 @@ const commitHistory = definePrimitive({
     }
 
     const api = {
-      /** Selects a commit by id, hash or subject; `null` clears the selection. */
+      /** Takes an id, hash or subject; `null` clears the selection. */
       select(ref: string | null, options?: ChangeOptions<CommitHistoryChangeReason>) {
         if (!selectable()) throw new Error("This history doesn't select commits; pass selected or onSelect.")
         const id =
@@ -218,7 +215,7 @@ const commitHistory = definePrimitive({
         if (!context.options().onOpenCommit) throw new Error("This history doesn't open commits; use expandDetails.")
         return settled(!dispatch(context, "onOpenCommit", id, reasonOf(options)), "openCommit", reasonOf(options))
       },
-      /** Copies the commit's hash where the page has clipboard access, and returns it either way. */
+      /** Returns the hash even where the page has no clipboard access. */
       async copyHash(ref: string, event?: Event) {
         const { id, hash } = find(ref)
         const clipboard = typeof navigator === "undefined" ? undefined : navigator.clipboard
@@ -247,7 +244,7 @@ const commitHistory = definePrimitive({
         }
         return settled(change("branch", name, reasonOf(options)), "selectBranch", reasonOf(options))
       },
-      /** Scrolls to a branch's head and focuses it, in the branches view; `null` lets go of it. */
+      /** Works in the branches view; `null` lets go of the branch. */
       focusBranch(name: string | null, options?: ChangeOptions<CommitHistoryChangeReason>) {
         const branches = context.options().lookup?.branches?.() ?? []
         if (name !== null && !branches.some((branch) => branch.name === name)) {
@@ -256,7 +253,7 @@ const commitHistory = definePrimitive({
         }
         return settled(change("focusedBranch", name, reasonOf(options)), "focusBranch", reasonOf(options))
       },
-      /** The branches beside the base with their heads and how far ahead and behind they are. Reads only. */
+      /** Reads only. */
       listBranches() {
         return [...(context.options().lookup?.branches?.() ?? [])]
       },

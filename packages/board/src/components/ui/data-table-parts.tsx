@@ -1,7 +1,7 @@
 "use client"
 
 import type { ChangeDetails } from "@ui-sdk/core"
-import type { ReactNode } from "react"
+import type { ComponentProps, ReactNode } from "react"
 import { ChevronDownIcon, ChevronUpIcon, ChevronsUpDownIcon } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
@@ -130,6 +130,11 @@ function DataTableHeaderCell<Row>({
   )
 }
 
+function renderButtonWithTabIndex(tabIndex: number | undefined): ComponentProps<typeof Checkbox>["render"] {
+  if (tabIndex === undefined) return undefined
+  return (part) => <button {...part} tabIndex={tabIndex} />
+}
+
 function DataTableCheckbox({
   label,
   checked,
@@ -141,13 +146,11 @@ function DataTableCheckbox({
   checked: CheckedState
   disabled?: boolean
   onChange: (checked: boolean, event?: Event) => void
-  /** -1 inside a cell that holds the tab stop itself. */
   tabIndex?: number
 }) {
   return (
     <Checkbox
-      // The part writes its own tabindex over a prop's; the rendered element's wins.
-      render={tabIndex === undefined ? undefined : (part) => <button {...part} tabIndex={tabIndex} />}
+      render={renderButtonWithTabIndex(tabIndex)}
       aria-label={label}
       checked={checked}
       disabled={disabled}

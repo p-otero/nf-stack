@@ -15,7 +15,6 @@ type LinkVariant = "inline" | "nav" | "muted" | "standalone" | "plain"
 const focusRing =
   "rounded-sm outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
 
-// `plain` adds nothing, not even the focus ring, so a row or card styled through className keeps its own.
 const linkVariants = cva("", {
   variants: {
     variant: {
@@ -34,38 +33,28 @@ const linkVariants = cva("", {
 
 type LinkProps = Omit<PartProps<"a">, "children"> & {
   children?: ReactNode
-  /**
-   * `inline` sits in running text (underlined at rest), `nav` and `muted` list links (underlined on hover),
-   * `standalone` is a call to action on its own line, `plain` leaves the look to `className` (a card, a row).
-   */
+  /** `inline` is underlined at rest, `nav` and `muted` on hover; `plain` adds no look, not even the focus ring. */
   variant?: LinkVariant
-  /** Another site: a trailing icon and `rel="noopener noreferrer"`. Opens in the same tab unless `newTab`. */
+  /** Adds a trailing icon and `rel="noopener noreferrer"`; opens in the same tab unless `newTab`. */
   external?: boolean
-  /** Opens in a new tab (`target="_blank"`) and says so to screen readers with `newTabLabel`. */
+  /** `target="_blank"`, announced to screen readers with `newTabLabel`. */
   newTab?: boolean
   newTabLabel?: string
-  /** Marks the link to the current page (`aria-current="page"`), or pass another `aria-current` token. */
+  /** `true` is `aria-current="page"`; a string is another `aria-current` token. */
   current?: boolean | Exclude<AriaAttributes["aria-current"], boolean | "true" | "false">
-  /**
-   * Takes over a plain click (modified clicks keep the browser's behaviour), for client-side routing. It also
-   * offers agents a `follow` action that calls it; links without it are invisible to agents.
-   */
+  /** Takes over a plain click (modified clicks stay native) and gives agents a `follow` action; without it agents don't see the link. */
   onFollow?: LinkOptions["onFollow"]
   /**
-   * Routes on the client, for a router's links that agents don't need as actions of their own (a sidebar, a pager):
-   * a primary mouse press follows at once, like a fast link, and a plain click or Enter follows too, without a page
-   * load. Modified clicks keep the browser's behaviour. With `onFollow` too, `onFollow` wins.
+   * Client-side routing without an agent action: a primary mouse press, a plain click or Enter call it; modified
+   * clicks stay native. `onFollow` wins over it.
    */
   onNavigate?: (href: string, event: Event) => void
-  /**
-   * Runs when someone is about to follow the link (a 65 ms hover, focus, a mouse or pen press), to preload the
-   * route. It can run more than once for one visit; keep it idempotent.
-   */
+  /** Fires on a 65 ms hover, focus, or a mouse or pen press, to preload; it can fire more than once per visit. */
   onIntent?: (href: string) => void
   /**
-   * Follows a same-origin link on mouse press, not release (default `true`): navigation only, as moving away can't
-   * cancel it (WCAG 2.5.2). Without `onFollow` it uses `location.assign`, so it is off with `render` or `onClick`,
-   * which act on the click. Off for `external`; `data-no-fast-link` on an ancestor turns a region off.
+   * Follows a same-origin link on mouse press, for navigation only (WCAG 2.5.2: a press can't be cancelled). Off for
+   * `external`, and without `onFollow` also with `render` or `onClick`; `data-no-fast-link` on an ancestor turns a
+   * region off. @defaultValue true
    */
   fast?: boolean
 }
@@ -122,11 +111,10 @@ function FollowLink({ onFollow, onIntent, render, fast = true, ...props }: LinkP
   )
 }
 
-// Without `onFollow` or `onNavigate`, a router element or an `onClick` may route or cancel on the click, so a press
-// must not navigate first.
 function PlainLink({ render, fast = true, onNavigate, onIntent, ...props }: Omit<LinkProps, "onFollow">) {
+  const clickMayRouteOrCancel = Boolean(render) || (onNavigate === undefined && Boolean(props.onClick))
   const ref = useFastLink<HTMLAnchorElement>({
-    enabled: fast && !props.external && !render && (onNavigate !== undefined || !props.onClick),
+    enabled: fast && !props.external && !clickMayRouteOrCancel,
     onFollow: onNavigate ? (href, { event }) => onNavigate(href, event) : undefined,
   })
   const intent = useLinkIntent(props.href, onIntent)

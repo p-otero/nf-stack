@@ -40,10 +40,11 @@ type FilterSelectProps = {
   controller: AgentTaskBoardController
 }
 
-// "" stands for "any": the primitive's filter treats an empty value as clearing that filter.
+const ANY = ""
+
 function FilterSelect({ name, options, filters, labels, controller }: FilterSelectProps) {
   const items = [
-    { value: "", label: labels.filters[anyLabel[name]] },
+    { value: ANY, label: labels.filters[anyLabel[name]] },
     ...options[choiceSources[name]].map((value) => ({ value, label: value })),
   ]
   return (
@@ -51,7 +52,7 @@ function FilterSelect({ name, options, filters, labels, controller }: FilterSele
       <FieldLabel>{labels.filters[name]}</FieldLabel>
       <Select
         items={items}
-        value={filters[name] ?? ""}
+        value={filters[name] ?? ANY}
         onValueChange={(value) => controller.filter({ [name]: value || null }, { reason: "item-press" })}
       >
         <SelectTrigger>

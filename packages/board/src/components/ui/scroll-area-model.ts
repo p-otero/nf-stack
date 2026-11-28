@@ -143,7 +143,7 @@ const mainAxis = (state: Pick<ScrollAreaModel, "overflowX" | "overflowY">): Axis
 const prefersReducedMotion = () =>
   typeof matchMedia === "function" && matchMedia("(prefers-reduced-motion: reduce)").matches
 
-// Written on the root on every scroll. Inherited, they would restyle the whole content each time.
+// Perf: written on the root on every scroll; inherited, they would restyle the whole content each time.
 const frameVariables = /* @__PURE__ */ axes.flatMap((axis) => [
   names[axis].before,
   names[axis].after,
@@ -156,9 +156,7 @@ function registerFrameVariables() {
   for (const name of frameVariables) {
     try {
       CSS.registerProperty({ name, syntax: "*", inherits: false })
-    } catch {
-      // Another copy of this module, or the app, registered it first.
-    }
+    } catch {}
   }
 }
 
@@ -215,13 +213,22 @@ function focusViewport(el: HTMLElement) {
 type Listeners = { [Type in keyof HTMLElementEventMap]?: (event: HTMLElementEventMap[Type]) => void }
 
 function listen(el: HTMLElement, listeners: Listeners, options?: AddEventListenerOptions) {
-  // Each listener takes the event of its own key; TypeScript can't correlate a key with its value through
+  // Workaround: each listener takes the event of its own key; TypeScript can't correlate a key with its value through
   // `Object.entries`.
   const entries = assumeType<[string, EventListener][]>(Object.entries(listeners))
   for (const [type, listener] of entries) el.addEventListener(type, listener, options)
   return () => {
     for (const [type, listener] of entries) el.removeEventListener(type, listener, options)
   }
+}
+
+type ScrollViewQueries = {
+  /** Whether the view is at that edge now, read from the DOM; `undefined` without a viewport, as on the server. */
+  isAt: (edge: "start" | "end") => boolean | undefined
+  /** Focuses the viewport, focusable from script while it holds focus when it isn't a tab stop. */
+  focusViewport: () => void
+  /** Applies changed options, like `stickToEnd` or `type`. */
+  refresh: () => void
 }
 
 export {
@@ -254,4 +261,5 @@ export {
   type ScrollAreaScrollOptions,
   type ScrollAreaStore,
   type ScrollAreaType,
+  type ScrollViewQueries,
 }

@@ -10,8 +10,7 @@ import { ThemedImage } from "@/components/ui/themed-image"
 import { useLocale } from "@/lib/locale"
 import { cn } from "@/lib/utils"
 
-// UI SDK's Button keeps its own data-slot over a prop; the rendered element's props win.
-function slotted(props: ComponentProps<"button">) {
+function buttonWithOwnSlot(props: ComponentProps<"button">) {
   return <button {...props} data-slot="attachment-thumb" />
 }
 
@@ -114,7 +113,7 @@ function AttachmentThumb({
     return (
       <Button
         {...shared}
-        render={slotted}
+        render={buttonWithOwnSlot}
         aria-label={openLabel(attachment.name)}
         title={attachment.name}
         onClick={(event) => onOpen(attachment, event)}
@@ -171,7 +170,7 @@ function AttachmentThumb({
     return (
       <Button
         {...shared}
-        render={slotted}
+        render={buttonWithOwnSlot}
         title={attachment.name}
         onClick={(event) => onOpen(attachment, event)}
         className={pressable}

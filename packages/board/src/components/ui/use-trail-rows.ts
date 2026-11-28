@@ -19,6 +19,19 @@ type TrailSegment = { type: "row"; index: number; top?: number } | { type: "gap"
 
 const noop = () => {}
 
+type TrailRowsLayout = {
+  /** Rows render only in view, by either engine. */
+  virtual: boolean
+  /** The rows' box is `height` px tall and rows sit at their `top`. */
+  absolute: boolean
+  /** Pass as the `ref` of the element the rows are in, in flow. */
+  anchor: (node: HTMLElement | null) => void
+  /** Pass as the `ref` of the scroller, for UI SDK's virtualizer. */
+  setScroller: (scroller: HTMLElement | null) => void
+  /** Renders a row wherever the list is scrolled and scrolls to it, like a branch's head about to take focus. */
+  reveal: (index: number) => void
+}
+
 /**
  * The rows of a long trail or tree. By default `virtual-rows`, rows in document flow; with `findable`, UI SDK's
  * virtualizer with absolutely positioned rows, whose findable layers let find in page reach the rows that aren't
@@ -43,7 +56,6 @@ function useTrailRows({ count, estimate, getKey, text, findable }: TrailRowsOpti
       segment.type === "row" ? { type: "row", index: segment.index } : segment,
     )
 
-  // Rows are memoized: everything they get keeps its identity across scrolls.
   const { measureElement } = flow
   const { measure: measureLayered } = layered
   const measure = useCallback(
@@ -60,7 +72,6 @@ function useTrailRows({ count, estimate, getKey, text, findable }: TrailRowsOpti
     [absolute, pinFlow, pinLayered],
   )
   const { renderNow } = flow
-  /** Renders a row wherever the list is scrolled and scrolls to it, like a branch's head about to take focus. */
   const reveal = useCallback(
     (index: number) => {
       if (absolute) {
@@ -77,22 +88,21 @@ function useTrailRows({ count, estimate, getKey, text, findable }: TrailRowsOpti
     [absolute, scrollFlow, scrollLayered],
   )
 
-  return {
-    /** Rows render only in view, by either engine. */
+  const layout: TrailRowsLayout = {
     virtual: absolute || flow.enabled,
-    /** The rows' box is `height` px tall and rows sit at their `top`. */
     absolute,
+    anchor: flow.anchor,
+    setScroller,
+    reveal,
+  }
+  return {
+    ...layout,
     height: absolute ? layered.size : undefined,
     segments,
-    /** Pass as the `ref` of the element the rows are in, in flow. */
-    anchor: flow.anchor,
-    /** Pass as the `ref` of the scroller, for UI SDK's virtualizer. */
-    setScroller,
     measure: absolute || flow.enabled ? measure : undefined,
     textSlot: absolute ? layered.findableText : undefined,
     pin,
     scrollToIndex,
-    reveal,
   }
 }
 

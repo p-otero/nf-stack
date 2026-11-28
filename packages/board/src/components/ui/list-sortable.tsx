@@ -7,7 +7,6 @@ import { Sortable } from "@/components/ui/sortable"
 import type { SortableLabels } from "@/components/ui/sortable-labels"
 import type { SortableReason } from "@/components/ui/sortable-primitive"
 
-// Rows sit edge to edge, like the List's own; cards keep the List's grid.
 const containerClassNames = {
   row: "gap-0",
   // oxlint-disable-next-line shadcn/no-arbitrary-values -- the List's own card grid, which the sortable replaces
@@ -27,7 +26,6 @@ type ListSortableRowsProps = {
   renderRow: (index: number) => ReactNode
 }
 
-/** A List's rows while they reorder: the rows are the sortable's items, in the draft's order while one moves. */
 function ListSortableRows({
   label,
   grid,

@@ -33,17 +33,16 @@ type AgentTaskBoardColumnsProps = {
 
 type Group = "ready" | "waiting"
 
-// The to-do column's groups are lists of their own, so a card lands in the one its readiness puts it in.
 const groupList = (group: Group) => `todo:${group}`
 const statusOf = (list: string) => {
   const status = list.split(":")[0]
   return isOneOf(TASK_STATUSES, status) ? status : undefined
 }
 
-// Writes the full order, so changing one column never moves it ahead of the columns that had no config yet.
 function withColumn(columns: readonly ColumnConfig[], status: TaskStatus, change: Partial<ColumnConfig>) {
   const config = new Map(columns.map((column) => [column.status, column]))
-  return columnOrder(columns).map((each) => {
+  const fullOrder = columnOrder(columns)
+  return fullOrder.map((each) => {
     const column = config.get(each) ?? { status: each }
     return each === status ? { ...column, ...change } : column
   })
@@ -171,7 +170,6 @@ function AgentTaskBoardColumns({
       order={Object.keys(lists)}
       accepts={accepts}
       handle
-      // A TaskCard is already one of the board's tab stops; its handle is one of its own controls.
       handleFocus="card"
       agentMoves={false}
       itemLabel={(id) => byId.get(id)?.title}

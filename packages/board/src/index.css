@@ -165,6 +165,8 @@
     --color-diff-removed-strong: var(--diff-removed-strong);
     --color-diff-removed-gutter: var(--diff-removed-gutter);
     --color-diff-removed-foreground: var(--diff-removed-foreground);
+    --color-control-edge: var(--control-edge);
+    --color-control-track-edge: var(--control-track-edge);
 }
 
 :root {
@@ -256,6 +258,12 @@
     --diff-removed-foreground: var(--destructive-soft-foreground);
     --ansi-lightness-min: 0;
     --ansi-lightness-max: 0.48;
+    --glass-rim-light: oklch(1 0 0 / 0.85);
+    --glass-rim-glow: oklch(1 0 0 / 0.4);
+    --glass-highlight: oklch(1 0 0 / 0.28);
+    --glass-sheen-highlight: oklch(1 0 0 / 0.16);
+    --glass-edge: oklch(1 0 0 / 0.5);
+    --glass-floating-lift: 30%;
 }
 
 .dark {
@@ -343,6 +351,12 @@
     --diff-removed-foreground: var(--destructive-soft-foreground);
     --ansi-lightness-min: 0.76;
     --ansi-lightness-max: 1;
+    --glass-rim-light: oklch(1 0 0 / 0.3);
+    --glass-rim-glow: oklch(1 0 0 / 0.1);
+    --glass-highlight: oklch(1 0 0 / 0.12);
+    --glass-sheen-highlight: oklch(1 0 0 / 0.06);
+    --glass-edge: oklch(1 0 0 / 0.14);
+    --glass-floating-lift: 40%;
 }
   :where(:root) {
     --control-radius: calc(var(--radius) * 2);
@@ -410,6 +424,13 @@
     --topbar-height: calc(var(--control-height) + var(--gap-items) * 2 + 1px);
     --type-entry-size: 0.875rem;
     --type-entry-leading: 1.25rem;
+    --glass-sheen: none;
+    --control-glass-opacity: 100%;
+    --control-glass-rim: 0 0 #0000;
+    --control-glass-sheen: none;
+    --control-edge: var(--input);
+    --control-track-edge: var(--border);
+    --control-glass-edge: transparent;
 }
 
 @utility backdrop-surface {
@@ -562,6 +583,7 @@
     --type-display-sm-leading: 1.5rem;
     --type-display-size: 1.5rem;
     --type-display-leading: 1.75rem;
+    --sidebar-rail-width: calc(var(--control-height) + 1rem);
 }
 
 @container agent-task-board (width <= 75rem) {
@@ -609,6 +631,7 @@
     --board-column-max-width: 15rem;
     --task-panel-width: 22rem;
     --sidebar-width: 14rem;
+    --sidebar-rail-width: calc(var(--control-height) + 1rem);
     }
 }
   [data-palette] {
@@ -820,14 +843,17 @@
   :root {
     --floating-opacity: 100% !important;
     --floating-backdrop: none !important;
+    --control-glass-opacity: 100% !important;
     }
   [data-theme] {
     --floating-opacity: 100% !important;
     --floating-backdrop: none !important;
+    --control-glass-opacity: 100% !important;
     }
   [data-elevation] {
     --floating-opacity: 100% !important;
     --floating-backdrop: none !important;
+    --control-glass-opacity: 100% !important;
     }
 }
 
@@ -850,6 +876,7 @@
     -webkit-backdrop-filter: var(--floating-backdrop);
     backdrop-filter: var(--floating-backdrop);
     --field-label-surface: color-mix(in oklab, var(--popover) var(--floating-opacity), var(--background));
+    background-image: var(--glass-sheen);
 }
   [data-theme="glass"] {
     --glass-opacity: 60%;
@@ -950,6 +977,12 @@
     --diff-removed-foreground: var(--destructive-soft-foreground);
     --ansi-lightness-min: 0.76;
     --ansi-lightness-max: 1;
+    --glass-rim-light: oklch(1 0 0 / 0.3);
+    --glass-rim-glow: oklch(1 0 0 / 0.1);
+    --glass-highlight: oklch(1 0 0 / 0.12);
+    --glass-sheen-highlight: oklch(1 0 0 / 0.06);
+    --glass-edge: oklch(1 0 0 / 0.14);
+    --glass-floating-lift: 40%;
     }
   :root:where(:not(.light, [data-color-scheme="light"])), :root:where(:not(.light, [data-color-scheme="light"])) [data-palette], :root[data-palette]:where(:not(.light, [data-color-scheme="light"])) {
     --background: oklch(0.145 var(--neutral-chroma) var(--neutral-hue));
@@ -1197,16 +1230,28 @@
     --floating-shadow: 0 0 #0000;
     --floating-backdrop: none;
     --floating-opacity: 100%;
+    --glass-sheen: none;
+    --control-glass-opacity: 100%;
+    --control-glass-rim: 0 0 #0000;
+    --control-glass-sheen: none;
 }
   [data-elevation="flat"] [data-theme] {
     --floating-shadow: 0 0 #0000;
     --floating-backdrop: none;
     --floating-opacity: 100%;
+    --glass-sheen: none;
+    --control-glass-opacity: 100%;
+    --control-glass-rim: 0 0 #0000;
+    --control-glass-sheen: none;
 }
   [data-elevation="flat"][data-theme] {
     --floating-shadow: 0 0 #0000;
     --floating-backdrop: none;
     --floating-opacity: 100%;
+    --glass-sheen: none;
+    --control-glass-opacity: 100%;
+    --control-glass-rim: 0 0 #0000;
+    --control-glass-sheen: none;
 }
 
 @supports not (backdrop-filter: blur(1px)) {
@@ -1214,12 +1259,15 @@
 @supports not (-webkit-backdrop-filter: blur(1px)) {
   :root {
     --floating-opacity: 100% !important;
+    --control-glass-opacity: 100% !important;
         }
   [data-theme] {
     --floating-opacity: 100% !important;
+    --control-glass-opacity: 100% !important;
         }
   [data-elevation] {
     --floating-opacity: 100% !important;
+    --control-glass-opacity: 100% !important;
         }
   [data-theme="glass"] {
     --glass-opacity: 100% !important;
@@ -1348,6 +1396,7 @@
     --type-display-sm-leading: 1.5rem;
     --type-display-size: 1.5rem;
     --type-display-leading: 1.75rem;
+    --sidebar-rail-width: calc(var(--control-height) + 1rem);
 }
   [data-density="default"] {
     --control-height: 2.25rem;
@@ -1382,6 +1431,7 @@
     --type-display-sm-leading: 1.75rem;
     --type-display-size: 1.75rem;
     --type-display-leading: 2rem;
+    --sidebar-rail-width: calc(var(--control-height) + 1rem);
 }
   [data-theme="compact"]:not([data-radius]) {
     --radius: 0.5rem;
@@ -1409,4 +1459,23 @@
     --board-column-max-width: 15rem;
     --task-panel-width: 22rem;
     --sidebar-width: 14rem;
+    --sidebar-rail-width: calc(var(--control-height) + 1rem);
+}
+
+@utility glass-sheen {
+    background-image: var(--glass-sheen);
+}
+
+@utility glass-control {
+    background-image: var(--control-glass-sheen);
+    --tw-inset-shadow: var(--control-glass-rim);
+    box-shadow: var(--tw-inset-ring-shadow, 0 0 #0000), var(--tw-inset-shadow), var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow, 0 0 #0000);
+}
+
+@utility glass-rim-none {
+    --control-glass-rim: 0 0 #0000;
+}
+
+@utility glass-control-edge {
+    --tw-inset-ring-shadow: inset 0 0 0 1px var(--control-glass-edge);
 }

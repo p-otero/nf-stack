@@ -22,10 +22,9 @@ let broken = false
 let nextId = 0
 const pending = new Map<number, Pending>()
 
-// The worker is built from the engine's own source in a Blob, not from a separate file: shadcn copies registry
-// files into a consumer's folders, where `new URL("./x.worker.ts", import.meta.url)` only resolves under bundlers
-// that compile it (Vite, webpack 5) and never under Jest, esbuild without plugins or plain Node. A Blob worker
-// works in every bundler. `__name` covers esbuild's keepNames helper, should a consumer's build add it.
+// Workaround: shadcn copies registry files into a consumer's folders, where `new URL("./x.worker.ts",
+// import.meta.url)` resolves only under bundlers that compile it, so the worker is built from the engine's source
+// in a Blob. `__name` covers esbuild's keepNames helper.
 function workerSource() {
   return [
     '"use strict";',
@@ -61,7 +60,7 @@ function getWorker() {
     worker = new Worker(url)
     URL.revokeObjectURL(url)
   } catch {
-    // A Content Security Policy without `worker-src blob:` refuses it: diff on the main thread instead.
+    // Security: a Content Security Policy without `worker-src blob:` refuses it.
     broken = true
     return null
   }
@@ -97,7 +96,7 @@ function viaWorker(target: Worker, oldText: string, newText: string, options: As
   return new Promise<TextDiff>((resolve, reject) => {
     const onAbort = () => {
       if (!pending.delete(id)) return
-      // A worker can't stop mid-diff; a fresh one serves the next request.
+      // Spec: a worker can't stop mid-diff.
       stopWorker()
       failAll(abortError())
       reject(abortError())

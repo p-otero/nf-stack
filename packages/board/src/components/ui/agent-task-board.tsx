@@ -45,9 +45,7 @@ const NO_FILTERS: TaskFilters = {}
 type BoardController = ReturnType<typeof createAgentTaskBoardController>
 type PanelCloseReason = "close-press" | "escape-key" | "outside-press" | "imperative"
 
-// The detail dialog also closes on its own (an action inside it, unmount). A refusal then keeps the task selected and
-// the dialog follows the selection, so there is no one to tell.
-function deselect(controller: BoardController, reason: PanelCloseReason) {
+function deselectToleratingRefusal(controller: BoardController, reason: PanelCloseReason) {
   if (reason !== "imperative") return controller.selectTask(null, { reason })
   try {
     return controller.selectTask(null, { reason })
@@ -117,7 +115,7 @@ function AgentTaskBoard(props: AgentTaskBoardProps) {
   const closePanel = useCallback(
     (reason: PanelCloseReason) => {
       focusCardNext()
-      deselect(controller, reason)
+      deselectToleratingRefusal(controller, reason)
     },
     [controller, focusCardNext],
   )

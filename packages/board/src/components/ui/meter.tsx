@@ -24,7 +24,6 @@ const meterVariants = cva("", {
   variants: {
     variant: {
       bar: gaugeClassNames.root,
-      // max-w-full and min-w-0 keep a long label from widening a narrow column: `truncate` on it then truncates.
       ring: "group/gauge inline-flex w-fit max-w-full min-w-0 flex-col items-center gap-inline text-center",
     },
   },
@@ -100,9 +99,7 @@ const arcClassName =
   // oxlint-disable-next-line shadcn/no-arbitrary-values -- transitions only the properties that move; transition-all also eased every colour and shadow change
   "stroke-primary transition-[stroke-dasharray,stroke] duration-panel ease-standard motion-reduce:transition-none group-data-[tone=destructive]/gauge:stroke-destructive group-data-[tone=info]/gauge:stroke-info group-data-[tone=neutral]/gauge:stroke-muted-foreground group-data-[tone=success]/gauge:stroke-success group-data-[tone=violet]/gauge:stroke-violet group-data-[tone=warning]/gauge:stroke-warning"
 
-// A circle of circumference 100, so the arc's dash length is the percentage itself. Mirrored in right to left, so
-// it fills the other way round.
-const RADIUS = 100 / (2 * Math.PI)
+const RADIUS_OF_CIRCUMFERENCE_100 = 100 / (2 * Math.PI)
 
 type MeterRingProps = Omit<ComponentProps<typeof MeterTrackPrimitive>, "children"> & {
   size?: MeterRingSize
@@ -125,12 +122,19 @@ function MeterRing({ size = "md", className, children, ...props }: MeterRingProp
             aria-hidden="true"
             className="col-start-1 row-start-1 size-full -rotate-90 rtl:-scale-y-100"
           >
-            <circle cx="18" cy="18" r={RADIUS} fill="none" strokeWidth="3" className="stroke-input/40" />
+            <circle
+              cx="18"
+              cy="18"
+              r={RADIUS_OF_CIRCUMFERENCE_100}
+              fill="none"
+              strokeWidth="3"
+              className="stroke-input/40"
+            />
             <circle
               data-slot="meter-ring-arc"
               cx="18"
               cy="18"
-              r={RADIUS}
+              r={RADIUS_OF_CIRCUMFERENCE_100}
               fill="none"
               strokeWidth="3"
               strokeLinecap={state.percent > 0 ? "round" : "butt"}

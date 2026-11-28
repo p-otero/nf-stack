@@ -119,7 +119,6 @@ function ShortcutHint({ keys, className, ...props }: ShortcutHintProps) {
 /** `aria-keyshortcuts` for one step; a sequence has no ARIA form, so it gets none. */
 function useAriaKeyshortcuts(keys: string | undefined) {
   const single = keys !== undefined && stepsOf(keys).length === 1
-  // The hook needs keys on every render; a placeholder stands in when there are none to describe.
   const hint = useShortcutHint(single ? keys : "a")
   return single ? hint.ariaKeyshortcuts : undefined
 }

@@ -7,18 +7,17 @@ type CellNavigationOptions = {
   pageSize?: number
   /** Brings a row that isn't rendered into view, so focus can follow once its cell renders. */
   reveal?: (row: number) => void
-  /** Enter on a cell. */
+  /** Fires on Enter on a cell. */
   onOpen?: (cell: GridCell, event: KeyboardEvent) => void
-  /** Space on a cell, where rows can be selected. */
+  /** Fires on Space on a cell, where rows can be selected. */
   onToggle?: (cell: GridCell, event: KeyboardEvent) => void
 }
 
 const defaultPageSize = 10
 
 /**
- * One tab stop for a table's cells, on UI SDK's grid focus: the arrows move by cell (Left and Right follow the text
- * direction), Home/End to a row's ends and with Ctrl/⌘ to the table's corners, Page Up/Down by `pageSize`. A cell
- * that isn't rendered is revealed first. Enter and Space go to `onOpen` and `onToggle`. A move changes two cells.
+ * Left and Right follow the text direction; Home/End go to a row's ends, with Ctrl/⌘ to the table's corners; Page
+ * Up/Down move by `pageSize`. A cell that isn't rendered is revealed first.
  */
 const cellNavigation = definePrimitive({
   name: "cell-navigation",
@@ -64,7 +63,6 @@ const cellNavigation = definePrimitive({
   },
   slots: (slot) => ({
     root: slot({}),
-    // `id` tells the cells apart: unique in the page, and stable while the cell stays.
     cell: slot<{ row: number; col: number; id: string }>({
       props: { row: "number", col: "number", id: "string" },
       focus: "roving",
@@ -91,7 +89,6 @@ const cellNavigation = definePrimitive({
           if (el) api.keydown(event, el, props)
         },
         pointerdown: (event, { api, props }) => api.grid.focus(props, { reason: "item-press", event }),
-        // Focus that arrives another way, like Tab or a script, makes the cell active, so the keys move from it.
         focusin: (event, { api, props }) => {
           const active = api.active()
           if (active?.row !== props.row || active.col !== props.col)
@@ -101,7 +98,6 @@ const cellNavigation = definePrimitive({
       bind: (el, { api, props }) => api.grid.bind(el, props),
     }),
   }),
-  // Keys are a people-only accelerator: agents act on rows through the table's own actions.
   agent: { actions: [], shown: () => false },
 })
 

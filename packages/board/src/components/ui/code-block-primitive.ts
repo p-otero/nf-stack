@@ -27,7 +27,7 @@ const codeBlock = definePrimitive({
       context.store.set({ copied: false })
     })
     return {
-      /** Writes the code to the clipboard. Where the page has no clipboard access, a press gets false. */
+      /** Where the page has no clipboard access, a press gets `false`. */
       copy(event?: Event) {
         const code = context.options().text ?? ""
         const clipboard = typeof navigator === "undefined" ? undefined : navigator.clipboard

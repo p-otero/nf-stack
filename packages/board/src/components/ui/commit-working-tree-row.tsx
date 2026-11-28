@@ -30,10 +30,7 @@ function workingTreeText(workingTree: WorkingTree, labels: CommitHistoryLabels, 
 
 type WorkingTreeRowProps = { workingTree: WorkingTree; labels: CommitHistoryLabels; locale?: string }
 
-/**
- * The checkout's uncommitted changes, as a row above the newest commit: a hollow dashed node (nothing is committed
- * yet), its name and the staged and unstaged counts. It shares the tree's focus and selection with the commits.
- */
+/** Shares the tree's focus and selection with the commits. */
 const WorkingTreeRow = memo(function WorkingTreeRow({ workingTree, labels, locale }: WorkingTreeRowProps) {
   const { label, counts, name } = workingTreeText(workingTree, labels, locale)
   return (

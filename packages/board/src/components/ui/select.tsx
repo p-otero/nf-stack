@@ -20,14 +20,12 @@ import { cva } from "class-variance-authority"
 import { Fragment, useState, type ComponentProps, type ReactNode } from "react"
 import { CheckIcon, ChevronDownIcon } from "lucide-react"
 
-import { floatingLabelControls } from "@/components/ui/field"
-import { fieldSurfaceClassName } from "@/components/ui/input"
+import { fieldSurfaceClassName, floatingLabelControls } from "@/components/ui/field"
 import { assumeType } from "@/lib/narrow"
 import { cnState } from "@/lib/utils"
 
 const triggerClassName = `${fieldSurfaceClassName} flex w-full min-w-0 cursor-pointer items-center justify-between gap-inline rounded-control px-control-x text-start text-entry outline-none focus-visible:ring-2 focus-visible:ring-ring [&>svg]:size-4 [&>svg]:shrink-0 [&>svg]:text-muted-foreground`
 
-// `default` follows the Field (taller with a floating label); `sm` is a fixed compact height for toolbars and filters.
 const selectTriggerVariants = cva(triggerClassName, {
   variants: { size: { default: "h-field-control", sm: "h-control-sm" } },
   defaultVariants: { size: "default" },
@@ -39,7 +37,7 @@ const listPopupClassName =
   // oxlint-disable-next-line eskais/scroll-area -- the floating list of Select, Combobox and Autocomplete, capped by UI SDK like dropdown-menu's; SelectList inside it can be a scroll area
   "m-0 max-h-(--available-height) min-w-(--anchor-width) overflow-y-auto overscroll-contain surface-floating p-inline outline-none transition-opacity duration-micro ease-standard data-ending-style:opacity-0 data-starting-style:opacity-0"
 
-// A tint alone misses the 3:1 a state needs, so the highlight also draws a full ring.
+// Spec: a tint alone misses the 3:1 a state needs (WCAG 1.4.11), so the highlight also draws a full ring.
 const listItemClassName =
   "flex min-h-control-sm cursor-default items-center gap-inline rounded-control px-inset-item text-sm outline-none select-none data-disabled:cursor-not-allowed data-disabled:opacity-50 data-highlighted:bg-accent data-highlighted:text-accent-foreground data-highlighted:ring-2 data-highlighted:ring-ring data-highlighted:ring-inset [&_svg]:size-4 [&_svg]:shrink-0"
 
@@ -115,10 +113,9 @@ function SelectSeparator({ className, ...props }: ComponentProps<typeof SelectSe
 
 type SelectValueChangeDetails = Parameters<NonNullable<SelectPrimitiveProps<string, false>["onValueChange"]>>[1]
 
-// Distributes over the single and multiple variants, so `onValueChange` keeps its parameter type.
 type WithoutItems<Props> = Props extends unknown ? Omit<Props, "items"> : never
 
-// UI SDK's `SelectProps<T, false>` still admits `multiple: true`; this is its single-value variant only.
+// Workaround: UI SDK's `SelectProps<T, false>` still admits `multiple: true`; this is its single-value variant only.
 type SingleSelectProps<T> = SelectPrimitiveProps<T, false> & { multiple?: false }
 
 type SelectOption<T = string> = { value: T; label: string; disabled?: boolean; description?: ReactNode }
@@ -144,11 +141,10 @@ type SelectProps<T = string, Multiple extends boolean | undefined = false> = Wit
 
 type DataAttributes = { [attribute: `data-${string}`]: string | number | boolean | undefined }
 
-// Never held by the select: choosing it reports null, and the controlled value stays null.
 const noneValue = "\u0000eskais-select-none"
 
 function noneOf<T>(): T {
-  // A sentinel the list holds in T's place for the "none" choice; it is never reported, since onValueChange maps it to
+  // Workaround: a sentinel the list holds in T's place for the "none" choice; it is never reported, since onValueChange maps it to
   // null, so a T that isn't a string never meets it.
   return assumeType<T>(noneValue)
 }
@@ -215,10 +211,10 @@ function OptionList<T>({ options, clearable }: { options: SelectOptions<T>; clea
 /** UI SDK's Select, plus `options` and `clearable`. With children it renders them, as the parts API always has. */
 function Select<T = string, Multiple extends boolean | undefined = false>(props: SelectProps<T, Multiple>) {
   const { options, clearable, "aria-label": ariaLabel, size, triggerProps, children, ...root } = props
-  // `Omit` over UI SDK's props, which distribute over a generic `Multiple`, can't be put back together by TypeScript;
+  // Workaround: `Omit` over UI SDK's props, which distribute over a generic `Multiple`, can't be put back together by TypeScript;
   // `root` is those props less ours, with `items` readonly, which UI SDK only reads.
   const primitive = assumeType<SelectPrimitiveProps<T, Multiple>>(root)
-  // The single-value view of the same props, read only when `multiple` isn't true.
+  // Workaround: the single-value view of the same props, read only when `multiple` isn't true.
   const one = assumeType<SingleSelectProps<T>>(root)
   const single = primitive.multiple !== true
   const [own, setOwn] = useState<SingleSelectProps<T>["value"] | T>(() => one.defaultValue ?? null)

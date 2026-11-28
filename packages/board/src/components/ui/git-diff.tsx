@@ -19,39 +19,28 @@ import { cn } from "@/lib/utils"
 type GitDiffProps = Omit<DiffViewProps, "files" | "headers"> & {
   /** A unified diff as git prints it (`git diff`, `git show`, a `.patch`), with any number of files. */
   patch?: string
-  /** File diffs you parsed or computed; give `oldText`/`newText` to make unchanged regions expandable. */
+  /** Unchanged regions expand only for a file that has `oldText` and `newText`. */
   files?: readonly FileDiff[]
-  /**
-   * The changed-files tree beside the diff, `--diff-tree-width` wide (13rem). `"collapsible"` adds a toggle
-   * at the start of the toolbar to hide and show it. @defaultValue true
-   */
+  /** `--diff-tree-width` wide (13rem). `"collapsible"` adds a toolbar toggle that hides and shows it. @defaultValue true */
   fileTree?: boolean | "collapsible"
-  /** Whether a collapsible tree shows. */
   fileTreeOpen?: boolean
   defaultFileTreeOpen?: boolean
   onFileTreeOpenChange?: (open: boolean) => void
-  /**
-   * The files in sections, like the working tree's "Staged" and "Unstaged": each a `label` and its `files` or
-   * `patch`, in order. The tree shows one section per group; the diff lists the groups one after another.
-   */
+  /** The tree shows one section per group; the diff lists the groups one after another, in order. */
   groups?: readonly GitDiffGroup[]
   /** The layout and wrap controls and the totals above the diff. @defaultValue true */
   toolbar?: boolean
   /**
-   * `fill` (default) fills the height GitDiff is given, beside its file tree. `auto` grows to the whole diff, for a
-   * diff inside a scrolling dialog body: the body is its one scroller, which the virtualizer follows, and the tree
-   * beside it stays in view up to 40rem tall. A `--diff-max-height` caps both, and the diff scrolls inside past it.
+   * `fill` (default) fills the height GitDiff is given. `auto` grows to the whole diff, for a scrolling dialog body:
+   * the body is the one scroller and the tree stays in view up to 40rem tall. A `--diff-max-height` caps both, and
+   * the diff scrolls inside past it.
    */
   height?: DiffViewProps["height"]
-  /**
-   * The file in view, for a file list or tree outside GitDiff: setting it scrolls the diff to that file, and
-   * `onCurrentFileChange` reports the file at the top as the diff scrolls. The built-in tree follows it too.
-   */
+  /** Setting it scrolls the diff to that file; `onCurrentFileChange` reports the file at the top as the diff scrolls. */
   currentFile?: string | null
   defaultCurrentFile?: string | null
 }
 
-/** A section of a GitDiff: its title in the file tree, and its files. */
 type GitDiffGroup = { label: string; files?: readonly FileDiff[]; patch?: string }
 
 const noGroups: readonly GitDiffGroup[] = []
@@ -71,12 +60,6 @@ function useControlled<T>(value: T | undefined, initial: T, onChange?: (next: T)
   return [current, set] as const
 }
 
-/**
- * A patch or a list of file diffs, rendered for review: a header per file (rename, status, counts, collapse,
- * viewed), a tree of changed files to jump between them, unified or split layout and word wrap, all files and
- * lines in one virtualized scroller, j/k between hunks and n/p between files, line selection for comments, and
- * agent actions (openFile, nextHunk, previousHunk, markViewed, getHunk).
- */
 function GitDiff({
   patch,
   files: given,

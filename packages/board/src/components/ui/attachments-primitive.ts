@@ -41,7 +41,6 @@ const attachments = definePrimitive({
   api: (context) => {
     const list = () => context.options().attachments ?? []
     return {
-      // The agent bridge passes arguments unchecked.
       openAttachment(id: unknown, options?: ChangeOptions<AttachmentOpenReason>) {
         const attachment = list().find((candidate) => candidate.id === id)
         if (!attachment) {

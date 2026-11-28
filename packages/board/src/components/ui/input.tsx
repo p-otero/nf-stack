@@ -5,17 +5,162 @@ import {
   InputClear as InputClearPrimitive,
   InputGroup as InputGroupPrimitive,
 } from "@ui-sdk/react/input"
+import {
+  PasswordInput as PasswordInputPrimitive,
+  PasswordInputControl as PasswordInputControlPrimitive,
+  PasswordInputToggle as PasswordInputTogglePrimitive,
+  type PasswordInputController,
+} from "@ui-sdk/react/password-input"
 import type { ComponentProps } from "react"
-import { XIcon } from "lucide-react"
+import { EyeIcon, EyeOffIcon, XIcon } from "lucide-react"
 
-import { floatingLabelControls } from "@/components/ui/field"
+import { fieldSurfaceClassName, floatingLabelControls, useFloatingPlaceholder } from "@/components/ui/field"
 import { ControlTooltip, type ControlTooltipOption } from "@/components/ui/tooltip"
 import { cnState } from "@/lib/utils"
 
-const fieldSurfaceClassName =
-  "border border-input bg-field/(--glass-opacity) shadow-xs transition-colors hover:border-input-strong/50 aria-invalid:border-destructive data-disabled:cursor-not-allowed data-disabled:opacity-50"
+type InputProps = ComponentProps<typeof InputPrimitive> & {
+  /**
+   * A secret, like an API key: an uncontrolled password field (UI SDK's PasswordInput, which agents always read as
+   * redacted) whose value never reaches a DOM attribute. It takes no `value` or `defaultValue`. Read it through
+   * `sensitiveController` or the `ref`, or bind it with `FormField`, which reads it on submit and clears it after.
+   * `autoComplete` is `new-password` by default, so browsers never fill a saved sign-in password into it.
+   */
+  sensitive?: boolean
+  /** With `sensitive`: a toggle that shows and hides the value; it hides again on submit and when the page is hidden. */
+  revealable?: boolean
+  /** Names the toggle; "Show" by default. */
+  revealLabel?: string
+  /** With `sensitive`: reads, clears and focuses the field from anywhere; `createPasswordInputController()`. */
+  sensitiveController?: PasswordInputController
+}
 
-function Input({ className, ...props }: ComponentProps<typeof InputPrimitive>) {
+const passwordManagerOptOut = {
+  "data-1p-ignore": "",
+  "data-lpignore": "true",
+  "data-bwignore": "",
+  "data-form-type": "other",
+}
+
+const sensitiveRootClassName = `${fieldSurfaceClassName} flex h-field-control w-full min-w-0 items-center gap-inline rounded-control ps-control-x text-entry has-aria-invalid:border-destructive has-[input:focus-visible]:ring-2 has-[input:focus-visible]:ring-ring`
+
+type AttributeValue = string | number | boolean | undefined
+
+type PassThrough = Record<`data-${string}` | `aria-${string}`, AttributeValue>
+
+const isPassThroughKey = (key: string): key is keyof PassThrough => key.startsWith("data-") || key.startsWith("aria-")
+
+const isAttributeValue = (value: unknown): value is AttributeValue =>
+  value === undefined || typeof value === "string" || typeof value === "number" || typeof value === "boolean"
+
+const noManagedAttributes: ReadonlySet<string> = new Set()
+
+/** The `data-*` and `aria-*` props, without the ones in `managed`, which the receiving element sets itself. */
+function namingAndMarkingAttributesOf(props: object, managed = noManagedAttributes): PassThrough {
+  const attributes: PassThrough = {}
+  for (const [key, value] of Object.entries(props)) {
+    if (isPassThroughKey(key) && isAttributeValue(value) && !managed.has(key)) attributes[key] = value
+  }
+  return attributes
+}
+
+function SensitiveInput({
+  className,
+  style,
+  revealable = false,
+  revealLabel = "Show",
+  sensitiveController,
+  autoComplete = "new-password",
+  value,
+  defaultValue,
+  name,
+  form,
+  id,
+  required,
+  disabled,
+  readOnly,
+  placeholder,
+  tabIndex,
+  maxLength,
+  minLength,
+  pattern,
+  inputMode,
+  onValueChange,
+  onBlur,
+  onFocus,
+  onClick,
+  onPointerDown,
+  onPointerUp,
+  onMouseEnter,
+  onMouseLeave,
+  ref,
+  ...rest
+}: InputProps) {
+  if (value !== undefined || defaultValue !== undefined) {
+    throw new Error("A sensitive Input is uncontrolled: drop value and defaultValue, and read it on submit.")
+  }
+  return (
+    <PasswordInputPrimitive
+      data-agent-secret=""
+      controller={sensitiveController}
+      autoComplete={autoComplete}
+      name={name}
+      form={form}
+      required={required}
+      disabled={disabled}
+      readOnly={readOnly}
+      onValueChange={onValueChange}
+      style={style}
+      className={cnState(
+        `${sensitiveRootClassName} ${revealable ? "pe-inline" : "pe-control-x"}`,
+        typeof className === "string" ? className : undefined,
+      )}
+    >
+      <PasswordInputControlPrimitive
+        {...namingAndMarkingAttributesOf(rest)}
+        ref={ref}
+        id={id}
+        placeholder={useFloatingPlaceholder(placeholder)}
+        tabIndex={tabIndex}
+        maxLength={maxLength}
+        minLength={minLength}
+        pattern={pattern}
+        inputMode={inputMode}
+        onBlur={onBlur}
+        onFocus={onFocus}
+        onClick={onClick}
+        onPointerDown={onPointerDown}
+        onPointerUp={onPointerUp}
+        onMouseEnter={onMouseEnter}
+        onMouseLeave={onMouseLeave}
+        {...passwordManagerOptOut}
+        className="h-full w-full min-w-0 bg-transparent font-mono outline-none placeholder:font-sans placeholder:text-muted-foreground data-disabled:cursor-not-allowed"
+      />
+      {revealable ? (
+        <ControlTooltip label={revealLabel}>
+          <PasswordInputTogglePrimitive
+            aria-label={revealLabel}
+            className="touch-target inline-flex size-7 shrink-0 cursor-pointer items-center justify-center rounded-control text-muted-foreground outline-none hover:bg-accent hover:text-accent-foreground focus-visible:ring-2 focus-visible:ring-ring data-disabled:cursor-not-allowed data-disabled:hover:bg-transparent [&_svg]:size-4"
+          >
+            {(state) => (state.visible ? <EyeOffIcon /> : <EyeIcon />)}
+          </PasswordInputTogglePrimitive>
+        </ControlTooltip>
+      ) : null}
+    </PasswordInputPrimitive>
+  )
+}
+
+function Input({ className, sensitive = false, revealable, revealLabel, sensitiveController, ...props }: InputProps) {
+  if (sensitive) {
+    return (
+      <SensitiveInput
+        className={className}
+        revealable={revealable}
+        revealLabel={revealLabel}
+        sensitiveController={sensitiveController}
+        {...props}
+      />
+    )
+  }
   return (
     <InputPrimitive
       className={cnState(
@@ -65,4 +210,5 @@ function InputClear({
 
 floatingLabelControls.add(Input).add(InputGroup)
 
-export { fieldSurfaceClassName, Input, InputClear, InputGroup }
+export { fieldSurfaceClassName, Input, InputClear, InputGroup, namingAndMarkingAttributesOf }
+export type { InputProps }

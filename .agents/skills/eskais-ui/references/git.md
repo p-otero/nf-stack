@@ -74,7 +74,7 @@ A branch's history as a commit trail, and a repository's files at a commit. Five
 <DataProvider>
   <ServerCommitHistory
     aria-label="Commits"
-    source={commitSource} // a PageSource<Commit>, like cursorSource over your git log endpoint
+    source={commitSource} // a PageSource<Commit>, like cursorSource (page-source-cursor) over your git log endpoint
     filter={{ branch }}
     pageSize={100}
     labels={{ errorTitle: "Couldn't load commits", retry: "Try again", emptyTitle: "No commits yet" }}

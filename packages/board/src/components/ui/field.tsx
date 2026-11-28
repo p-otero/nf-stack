@@ -13,27 +13,21 @@ import { Children, createContext, isValidElement, useContext, type ComponentProp
 
 import { cnState } from "@/lib/utils"
 
-/** Where a Field's label sits: above the control, inside it (floating up once there's a value), or on its border. */
+/** `top` above the control, `in` inside it (floating up once there's a value), `on` on its border. */
 type FieldLabelPlacement = "top" | "in" | "on"
 
 const FieldLabelPlacementContext = createContext<FieldLabelPlacement>("top")
 
-/**
- * A default placement for the Fields inside, like a Form's `labelPlacement`. A Field that sets its own wins; one that
- * isn't in the floating layout (see `inFloatingLayout`) keeps its label on top.
- */
+/** A default for the Fields inside. A Field's own placement wins; one outside the floating layout keeps `top`. */
 const FieldLabelPlacementDefault = createContext<FieldLabelPlacement | undefined>(undefined)
 
-/** The label placement of the Field around a control; controls give `in` a blank placeholder to float on. */
 function useFieldLabelPlacement() {
   return useContext(FieldLabelPlacementContext)
 }
 
-// Controls that can hold a floating label. FormField applies a Form's default placement only to these, so radio
-// groups, sliders and switches keep their label on top. Each control's module adds itself.
+/** The only controls a Form's default placement reaches. Each control's module adds itself. */
 const floatingLabelControls = new WeakSet<object>()
 
-/** How a control takes its value: the prop names, and how the form's value maps to the control and back. */
 type FormControlAdapter = {
   value: string
   change: string
@@ -43,11 +37,14 @@ type FormControlAdapter = {
   blur?: boolean
 }
 
-// How FormField binds each control, by component. It lives here, not in form-field, so a control's module can add
-// itself without pulling in react-hook-form; a control missing from it binds `value`/`onValueChange` as is.
+/** The border, fill and states every text control's box shares. */
+const fieldSurfaceClassName =
+  "border border-input bg-field/(--glass-opacity) shadow-xs transition-colors hover:border-input-strong/50 aria-invalid:border-destructive data-disabled:cursor-not-allowed data-disabled:opacity-50"
+
+/** How FormField binds each control, by component; a control missing from it binds `value`/`onValueChange` as is. */
 const formControlAdapters = new Map<unknown, FormControlAdapter>()
 
-/** A blank placeholder for an input in a `labelPlacement="in"` Field: the label floats on `:placeholder-shown`. */
+/** `" "` when unset in an `in` Field: the label floats on `:placeholder-shown`. */
 function useFloatingPlaceholder(placeholder: string | undefined) {
   const placement = useFieldLabelPlacement()
   return placeholder ?? (placement === "in" ? " " : undefined)
@@ -59,8 +56,6 @@ const checkboxRowClassName =
 const textControls =
   "[data-slot=input],[data-slot=native-select],[data-slot=select-value],[data-slot=number-input-control],[data-slot=date-picker-input],[data-slot=combobox-input],[data-slot=autocomplete-input],[data-slot=password-input-control],[data-slot=date-input],[data-slot=time-input]"
 
-// Every control sizes from --field-control-height, so `in` makes the text controls taller and moves their text below
-// the floated label. A placeholder would collide with the resting label, so it shows only while its control is focused.
 const placementClassName: Record<FieldLabelPlacement, string> = {
   top: "[--field-control-height:var(--control-height)]",
   in: [
@@ -82,6 +77,9 @@ const placementClassName: Record<FieldLabelPlacement, string> = {
   ].join(" "),
 }
 
+const surfaceBandOverBorderAndRing =
+  "bg-[linear-gradient(to_bottom,transparent_calc(50%-3px),var(--field-label-surface)_calc(50%-3px),var(--field-label-surface)_calc(50%+2px),transparent_calc(50%+2px))]"
+
 const labelPlacementClassName: Record<FieldLabelPlacement, string> = {
   top: "text-sm font-medium",
   in: [
@@ -90,11 +88,9 @@ const labelPlacementClassName: Record<FieldLabelPlacement, string> = {
     "field-floated:translate-y-(--field-label-float-y) field-floated:scale-(--field-label-scale)",
     "[:focus-within>&:not([data-invalid])]:text-foreground data-invalid:text-destructive",
   ].join(" "),
-  // A band of the surface's fill covers the border line and the 2px focus ring above it, so the label cuts the
-  // line while a translucent (glass) surface still shows through around the text.
   on: [
     "absolute start-(--field-label-start) top-0 z-10 max-w-[calc(100%-2*var(--field-label-start))] truncate px-inline text-caption font-medium text-muted-foreground",
-    "bg-[linear-gradient(to_bottom,transparent_calc(50%-3px),var(--field-label-surface)_calc(50%-3px),var(--field-label-surface)_calc(50%+2px),transparent_calc(50%+2px))]",
+    surfaceBandOverBorderAndRing,
     "[:focus-within>&:not([data-invalid])]:text-foreground data-invalid:text-destructive",
   ].join(" "),
 }
@@ -111,10 +107,7 @@ type FieldProps = ComponentProps<typeof FieldPrimitive> & {
 
 const ownPadding = /^!?-?p[xytbse]?-(?!0$)/
 
-/**
- * Whether a Field's own className pads it. The floating label is placed from the Field's box, so padding (which also
- * replaces the `on` layout's top padding) moves the control away from it and the label lands on the control's value.
- */
+/** True for any padding utility in a string className, under any variant, except `-0`. */
 function padsItself(className: unknown) {
   if (typeof className !== "string") return false
   return className.split(/\s+/).some((token) => ownPadding.test(token.slice(token.lastIndexOf(":") + 1)))
@@ -122,8 +115,6 @@ function padsItself(className: unknown) {
 
 const trailingParts = new Set<unknown>()
 
-// The layout the floating styles assume: the label, the control right under it, and only a description or an error
-// after them. Text, a wrapper or any other element between or after them changes where the control sits.
 function inFloatingLayout(children: FieldProps["children"], className: unknown) {
   if (typeof children === "function" || padsItself(className)) return false
   const [label, control, ...rest] = Children.toArray(children)
@@ -195,7 +186,7 @@ type FieldSetProps = Omit<ComponentProps<typeof FieldSetPrimitive>, "children"> 
   children?: ReactNode
 }
 
-/** A native fieldset: its legend names the group, and `disabled` disables every control inside. */
+/** `disabled` disables every control inside. */
 function FieldSet({ legend, description, className, children, ...props }: FieldSetProps) {
   return (
     <FieldSetPrimitive className={cnState("m-0 flex min-w-0 flex-col gap-group border-0 p-0", className)} {...props}>
@@ -208,6 +199,7 @@ function FieldSet({ legend, description, className, children, ...props }: FieldS
 
 export {
   Field,
+  fieldSurfaceClassName,
   FieldDescription,
   FieldError,
   FieldGroup,

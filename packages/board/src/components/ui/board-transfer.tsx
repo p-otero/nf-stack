@@ -19,9 +19,9 @@ const Parts = createParts(boardTransfer, {
   instructions: "div",
 })
 
-/** The lists to render, the draft's while a card moves; null when the board doesn't move cards. */
 const BoardListsContext = createContext<TransferLists | null>(null)
 
+/** The lists to render: the draft's while a card moves; null when the board doesn't move cards. */
 function useBoardLists() {
   return use(BoardListsContext)
 }
@@ -33,17 +33,14 @@ type BoardTransferProps = BoardTransferOptions & {
   children: ReactNode
 }
 
+const rootClassNameCarryingFlipMotionTokens =
+  "group/board-transfer min-w-0 transition-none duration-panel ease-standard"
+
 function BoardTransfer({ children, className, labels, ...props }: BoardTransferProps) {
   const root = useRef<HTMLDivElement>(null)
   const text = { ...transferLabels, ...labels }
   return (
-    <Parts.Root
-      ref={root}
-      labels={labels}
-      // The root transitions nothing itself; it carries the motion tokens `useFlip` reads.
-      className={cn("group/board-transfer min-w-0 transition-none duration-panel ease-standard", className)}
-      {...props}
-    >
+    <Parts.Root ref={root} labels={labels} className={cn(rootClassNameCarryingFlipMotionTokens, className)} {...props}>
       {(state: { lists: TransferLists }) => (
         <>
           <FlipLists root={root} lists={state.lists} />
@@ -114,7 +111,7 @@ function BoardItemHandle({ className, label, labels, children, ...props }: Board
         "touch-target relative z-10 inline-flex size-control-sm shrink-0 cursor-grab touch-none items-center justify-center rounded-control text-muted-foreground outline-none select-none hover:bg-accent hover:text-accent-foreground focus-visible:ring-2 focus-visible:ring-ring aria-disabled:cursor-not-allowed aria-disabled:opacity-50 data-moving:bg-accent data-moving:text-accent-foreground [&_svg]:size-4",
         className,
       )}
-      // UI SDK fills `value` from the enclosing card (the slot's `from: "entry"`), but its part type still requires it.
+      // Workaround: UI SDK's Handle part type requires `value`, though it fills it from the enclosing card.
       {...assumeType<ComponentProps<typeof Parts.Handle>>(props)}
     >
       {children ?? <GripVerticalIcon />}

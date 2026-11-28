@@ -14,6 +14,7 @@ Part of the `eskais-ui` skill.
 - `StatDelta value comparison` sits under a `StatValue`: an arrow (mirrored in right to left) and the size of the change in a soft tone chip, then your `comparison` ("vs. last week").
 - `value` is a ratio by default, so 0.12 reads "12%"; `format` takes `Intl.NumberFormat` options or a function, `locale` the locale. Without `locale`, both it and `StatValue` follow the page's `<html lang>` (`useLocale` from `@/lib/locale`, also in RelativeTime, QuantityValue and charts), so they agree; set `lang` on `<html>`.
 - Its sign gives the direction (zero is flat), or pass `direction`. The direction gives the tone: up is success, down destructive, flat neutral; `invert` swaps them for a metric where down is good, like cost or errors; `tone` overrides.
+- `StatMedia tone label` is an icon (or a small chart) in a soft tone chip at the end of a `Stat`, top-aligned beside the label, value and hint, with no wrapper of your own: write it among the parts. It is decorative unless `label` names it (`role="img"`). `DashboardStat icon tone iconLabel` renders one.
 - Screen readers hear `labels.up/down/flat(formatted)` ("up 12%") and then the comparison, never the arrow or the colour. Override the labels in the page's language.
 
 ## Meters and progress

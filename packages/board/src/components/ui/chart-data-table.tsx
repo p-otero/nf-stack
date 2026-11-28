@@ -10,7 +10,6 @@ import { Table, TableBody, TableCaption, TableCell, TableHead, TableHeader, Tabl
 /** Any row object; an `interface` works too, since rows don't need an index signature. */
 type ChartRow = object
 
-// A row typed as an interface has no index signature, so its cells are read by name, as unknown values.
 const cell = (row: ChartRow, key: string): unknown => Reflect.get(row, key)
 
 type ChartDataTableProps<TRow extends ChartRow> = ChartName &
@@ -77,7 +76,6 @@ function ChartDataTable<TRow extends ChartRow>({
   )
 
   if (!visuallyHidden) return <div data-slot="chart-data-table">{table}</div>
-  // The inner box sizes to the table, so the scroll area never overflows and never adds a tab stop nobody can see.
   return (
     <div data-slot="chart-data-table" data-visually-hidden="" className="sr-only">
       <div className="w-max">{table}</div>

@@ -40,7 +40,6 @@ type FileGroupProps = {
   findable: boolean
 }
 
-/** The first row of a file's grid: past its header and notice. */
 function firstLineRow(doc: DiffSnapshot["doc"], start: number, end: number) {
   let row = start
   while (row < end && (doc.rows[row]!.kind === "file" || doc.rows[row]!.kind === "notice")) row++
@@ -183,14 +182,13 @@ function Viewport({
     {},
     {
       dir: "ltr",
-      // A UI SDK part keeps its own data-slot, so the element the scroll area renders takes the diff's back.
       render: (
         <ScrollAreaViewport render={(part) => <div {...part} data-slot="diff-view-viewport" data-height={height} />} />
       ),
       className: cn(
         // oxlint-disable-next-line shadcn/no-arbitrary-values -- a tab is four columns, as the unwrapped width counts it
         "relative h-auto min-h-0 flex-1 font-mono text-body-sm [tab-size:4]",
-        // Size containment keeps a filled pane's layout to itself; a content-sized one has to measure its rows.
+        // Perf: size containment keeps a filled pane's layout to itself; a content-sized one has to measure its rows.
         height === "fill" ? "contain-strict" : "contain-content",
         snapshot.wrap ? "whitespace-pre-wrap wrap-anywhere" : "whitespace-pre",
       ),
@@ -225,11 +223,7 @@ function Viewport({
   )
 }
 
-/**
- * The rows of one or many file diffs in one scroller, virtualized as one list: unified or split, collapsed
- * unchanged regions, intraline highlights, syntax colours for the lines on screen, one tab stop over the lines
- * and agent actions. `TextDiff` and `GitDiff` render it; use it directly for files you diffed yourself.
- */
+/** `TextDiff` and `GitDiff` render it; use it directly for files you diffed yourself. */
 function DiffView({
   labels = diffLabels,
   className,

@@ -11,8 +11,8 @@ import { TableCell, TableRow } from "@/components/ui/table"
 import { assumeType } from "@/lib/narrow"
 import { cn } from "@/lib/utils"
 
-// Plain values and stable callbacks, so `memo` keeps a row as it is while the table re-renders for a scroll, a
-// sort or another row's selection.
+// Perf: plain values and stable callbacks only, so `memo` skips a row when the table re-renders for a scroll, a sort
+// or another row's selection.
 type DataTableRowProps<Row> = {
   row: Row
   id: string
@@ -30,15 +30,16 @@ type DataTableRowProps<Row> = {
   measure?: (node: HTMLElement | null) => (() => void) | undefined
 }
 
-// The focus ring sits inside the row: a table row draws no box-shadow, and its outline would be clipped by the scroller.
+// Spec: a table row draws no box-shadow, and an outer outline would be clipped by the scroller, so the ring is inset.
 const rowClassName =
   "scroll-mt-(--control-height) outline-none data-selected:bg-muted focus-visible:bg-muted/70 focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-ring"
 
-// The cell's focus ring sits inside it, like the row's.
 const cellClassName = "outline-none focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-ring"
 
-// `memo` drops a component's type parameters (React's types), so the row is typed back as generic in `Row`.
-const DataTableRow = assumeType<<Row>(props: DataTableRowProps<Row>) => ReactNode>(
+type GenericDataTableRow = <Row>(props: DataTableRowProps<Row>) => ReactNode
+
+// Workaround: `memo` drops the row's type parameter; this gives it back.
+const DataTableRow = assumeType<GenericDataTableRow>(
   memo(function DataTableRow<Row>(props: DataTableRowProps<Row>) {
     const cells = useCellNavigationActive()
     if (cells) return <DataTableRowElement {...props} cells />
@@ -51,7 +52,6 @@ function assignRef(ref: unknown, node: HTMLElement | null) {
   if (ref && typeof ref === "object") Reflect.set(ref, "current", node)
 }
 
-// Rendered by NavigableRow, which passes the roving tab stop's ref and handlers along with the row's own props.
 function DataTableRowElement<Row>({
   row,
   id,
@@ -78,7 +78,6 @@ function DataTableRowElement<Row>({
     },
     [ref, measure],
   )
-  // Cells join the table's cell navigation only in that mode, so a row-mode row renders no wrapper per cell.
   const cellAt = (col: number, cell: ReactElement) =>
     cells ? <NavigableCell key={cell.key ?? col} row={position} col={col} render={cell} /> : cell
   return (
@@ -149,7 +148,6 @@ function DataTableLoadingRows({ rows, columns }: { rows: number; columns: number
     <TableRow key={`loading-${row}`} data-slot="data-table-loading-row" className="hover:bg-transparent">
       {Array.from({ length: columns }, (_cell, column) => (
         <TableCell key={column}>
-          {/* One line of text high, like the rows that replace it, so the table doesn't change height. */}
           <div className="flex h-lh items-center">
             <Skeleton className="h-4 w-full max-w-40" />
           </div>

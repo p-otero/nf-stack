@@ -10,7 +10,7 @@ type Stage = { id: string; label: string; tone?: Tone }
 type StageSize = "sm" | "md"
 type StageState = "reached" | "current" | "upcoming"
 
-// A stage without a tone takes the primary colour; neutral uses the grey that reaches 3:1 as a mark.
+// Spec: neutral uses the grey that reaches 3:1 as a mark (WCAG 1.4.11).
 const fillClassNames = {
   default: "bg-primary text-primary-foreground border-primary",
   neutral: "bg-muted-foreground text-background border-muted-foreground",
@@ -132,7 +132,6 @@ function StageTrack({
     return <StagePill stage={stage} size={size} href={getHref?.(stage)} className={className} />
   }
 
-  // Below 24rem a row of stages would break words, so the track stacks into a column.
   return (
     <div data-slot="stage-track-container" className={cn("@container w-full min-w-0", className)}>
       <ol

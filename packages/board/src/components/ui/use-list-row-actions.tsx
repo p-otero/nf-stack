@@ -30,7 +30,6 @@ function useListRowActions({
   labels: Partial<ListRowActionLabels> | undefined
   visibility: ListRowActionsVisibility
 }) {
-  // One Map for the list's life, filled by each action's component as it mounts.
   const [handles] = useState(() => new Map<string, ListRowActionHandle>())
   const labels = useMemo(() => ({ ...listRowActionLabels, ...overrides }), [overrides])
   const context = useMemo<RowActionsContextValue | null>(() => {

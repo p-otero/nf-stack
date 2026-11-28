@@ -106,7 +106,7 @@ type ListRowProps<Item> = {
   renderItem: (item: Item, index: number) => ReactNode
 }
 
-// Memoized: scrolling re-renders the list for its new range, and rows already in view stay as they are.
+// Perf: memoized row so rows in view don't re-render on scroll.
 const MemoListRow = memo(function ListRow<Item>({ item, index, setsize, measure, renderItem }: ListRowProps<Item>) {
   const position = useMemo(
     () => (setsize === undefined ? null : { index, setsize, measure }),
@@ -114,7 +114,7 @@ const MemoListRow = memo(function ListRow<Item>({ item, index, setsize, measure,
   )
   return <PositionContext value={position}>{renderItem(item, index)}</PositionContext>
 })
-// `memo` drops a component's type parameters; this gives ListRow back its generic signature.
+// Workaround: `memo` drops the row's type parameter; this gives it back.
 const ListRow = assumeType<<Item>(props: ListRowProps<Item>) => ReactNode>(MemoListRow)
 
 function List<Item = unknown>({
@@ -153,8 +153,7 @@ function List<Item = unknown>({
     [items, variant, children],
   )
   const data: readonly unknown[] | undefined = items ?? childRows
-  // `items` and the functions that read them come together, so these only ever see Items; TypeScript can't relate the
-  // two choices, so the functions are typed by what `data` holds.
+  // Workaround: TypeScript can't relate `items` to the functions that read them, so they are typed by what `data` holds.
   const itemFunctions = assumeType<ItemFunctions>({
     getId: getItemId,
     itemText: itemTextProp,
@@ -185,7 +184,6 @@ function List<Item = unknown>({
     getKey: keyAt,
   })
 
-  // Data rows name themselves; registering only keeps their handles, since re-rendering here re-registers them.
   const fromData = data !== undefined
   const refresh = useCallback(() => {
     if (fromData) return
@@ -326,15 +324,12 @@ function List<Item = unknown>({
     className: cn("min-w-0", containerClassNames[variant], virtual.enabled && "relative", className),
   }
 
-  // Selectable, the listbox is the List's own element, so one element carries the name. Agents see both: the List
-  // takes `select` (through `onSelect`), the listbox `setValue`, so a step that names either action is unambiguous.
   const listChildren = (
     <ListContext value={context}>
       <RowActionsContext value={actions.context}>{rows}</RowActionsContext>
     </ListContext>
   )
 
-  // With row actions, the grid is the List's own element, as the listbox is when rows are selectable.
   const partProps = grid
     ? {
         ...rootProps,
@@ -366,8 +361,7 @@ function List<Item = unknown>({
         }
       : {
           ...rootProps,
-          // Preflight's list-style: none strips list semantics in Safari unless the role is explicit. Sorting, the
-          // list is the sortable's own element inside.
+          // Workaround: Safari drops list semantics under Preflight's list-style: none unless the role is explicit.
           role: sorting ? "group" : "list",
           className: sorting ? cn("min-w-0", className) : rootProps.className,
           children: (
@@ -382,7 +376,7 @@ function List<Item = unknown>({
   const tag: "div" | "ul" = selectable || sorting || grid ? "div" : "ul"
   const root = usePart(handle, "root", {}, partProps, tag)
   if (!actions.roots) return root
-  // Outside the list's element: a grid or list owns only rows.
+  // Spec: a grid or list owns only rows, so the action roots render outside it.
   return (
     <>
       {root}

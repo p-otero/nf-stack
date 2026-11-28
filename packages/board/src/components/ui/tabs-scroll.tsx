@@ -15,8 +15,8 @@ const tabsScrollLabels: TabsScrollLabels = { left: "Scroll tabs left", right: "S
 
 type Edges = { left: boolean; right: boolean }
 
-// Physical edges, not logical ones: scrollLeft is negative under rtl in every current engine, and the fades and
-// buttons are placed physically, so reading both sides from the absolute offset covers both directions.
+// Spec: scrollLeft is negative under rtl in every current engine, so both sides are read from the absolute
+// offset, as the fades and buttons are placed physically.
 function readEdges(element: HTMLElement): Edges {
   const max = element.scrollWidth - element.clientWidth
   if (max <= 1) return { left: false, right: false }
@@ -31,9 +31,6 @@ function prefersReducedMotion() {
   return typeof matchMedia === "function" && matchMedia("(prefers-reduced-motion: reduce)").matches
 }
 
-// Scrolls only the list, never the page or a scrolling ancestor, so a tab an agent selects off screen doesn't
-// move the page. The list's scroll padding is the fade's width, so the tab lands clear of it. The target is
-// absolute, so a second call while a smooth scroll runs (focus and selection change together) lands in the same place.
 function revealTab(list: HTMLElement, tab: HTMLElement, smooth: boolean) {
   if (list.scrollWidth - list.clientWidth <= 1) return
   const style = getComputedStyle(list)
@@ -42,7 +39,6 @@ function revealTab(list: HTMLElement, tab: HTMLElement, smooth: boolean) {
   const left = box.left - (bounds.left + (Number.parseFloat(style.scrollPaddingLeft) || 0))
   const right = box.right - (bounds.right - (Number.parseFloat(style.scrollPaddingRight) || 0))
   const rtl = style.direction === "rtl"
-  // A tab wider than the clear space shows its start.
   const delta = left < 0 && right > 0 ? (rtl ? right : left) : left < 0 ? left : right > 0 ? right : 0
   if (Math.abs(delta) < 1) return
   list.scrollTo({ left: list.scrollLeft + delta, behavior: smooth && !prefersReducedMotion() ? "smooth" : "auto" })
@@ -54,10 +50,8 @@ function isTab(node: unknown): node is HTMLElement {
 
 const noEdges: Edges = { left: false, right: false }
 
-// The subscription also keeps the selected tab in view: on mount, after each resize (tabs change width as fonts load
-// or labels change), on focus and on selection. Geometry is read only where layout is already clean (the resize
-// observer, scroll events, an animation frame), never in the focus or key event: a list that fits does nothing on an
-// arrow press, and one that scrolls reveals its tab in the next frame.
+// Perf: geometry is read only where layout is already clean (the resize observer, scroll events, an animation
+// frame), never in the focus or key event: a list that fits does nothing on an arrow press.
 function createEdgesStore() {
   let edges = noEdges
   return {
@@ -149,7 +143,7 @@ function useScrollEdges() {
 
 type ScrollButtonProps = { side: "left" | "right"; label: string; onScroll: () => void }
 
-// Pointer-only, so aria-hidden and out of the tab order; agents select tabs on the tablist itself.
+// Spec: pointer-only, so hidden from assistive technology; agents select tabs on the tablist itself.
 function ScrollButton({ side, label, onScroll }: ScrollButtonProps) {
   return (
     <span

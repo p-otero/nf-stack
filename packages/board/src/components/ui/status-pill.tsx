@@ -25,7 +25,7 @@ const statusPillVariants = cva(
   },
 )
 
-// A dot on its own needs 3:1 against the page, so the quiet tones take a stronger grey than the pill's text.
+// Spec: a dot on its own needs 3:1 against the page (WCAG 1.4.11), so the quiet tones take a stronger grey.
 const dotToneClassNames = {
   neutral: "text-muted-foreground",
   info: "text-info",
@@ -39,7 +39,7 @@ const dotToneClassNames = {
 /** `true` pings three times whenever the status changes, then rests; `"always"` pings until it is turned off. */
 type StatusPulse = boolean | "always"
 
-// A running ping is a transform animation, and Chrome promotes everything painted after one to its own layer in
+// Perf: a running ping is a transform animation, and Chrome promotes everything painted after one to its own layer in
 // case they overlap: twenty pinging cards on a board cost ~15 ms of layerizing on every repaint. So it stops.
 const pulseThrice = { animationIterationCount: 3 }
 
@@ -110,7 +110,6 @@ type StatusPillProps = Omit<PartProps<"span">, "children"> & {
   pulse?: StatusPulse
 }
 
-// The label gets its own element so contrast is measured on the text alone, not on the dot beside it.
 function StatusPill({ className, tone, dot, pulse, render, children, ...props }: StatusPillProps) {
   return renderElement(
     "span",

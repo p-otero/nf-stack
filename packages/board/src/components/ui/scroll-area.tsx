@@ -39,8 +39,8 @@ function ScrollAreaViewport({ className, ...props }: ComponentProps<typeof parts
   )
 }
 
-// Functions rather than `const ScrollAreaContent = parts.Content`: a property read at the top of a module counts as a
-// side effect to bundlers, which then keep the whole scroll area in every bundle that imports this file.
+// Perf: functions rather than `const ScrollAreaContent = parts.Content`: bundlers count a property read at the top
+// of a module as a side effect and keep the whole scroll area in every bundle that imports this file.
 function ScrollAreaContent(props: ComponentProps<typeof parts.Content>) {
   return <parts.Content {...props} />
 }

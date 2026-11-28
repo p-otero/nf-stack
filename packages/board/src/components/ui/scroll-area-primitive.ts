@@ -79,7 +79,7 @@ const scrollAttrs = /* @__PURE__ */ live<ScrollAreaModel, unknown, unknown>((sta
   "data-hovering": flag(state.hovering),
   "data-sticking": flag(state.stickToEnd && state.sticking),
 }))
-// The root's frame variables are registered as not inherited; this keeps an unregistered fallback from reaching the content.
+// Perf: the frame variables are registered as not inherited; this keeps an unregistered fallback from the content.
 const contentShield = /* @__PURE__ */ Object.fromEntries(
   ["x", "y"].flatMap((axis) =>
     [`overflow-${axis}-start`, `overflow-${axis}-end`, `progress-${axis}`].map((name) => [
@@ -171,7 +171,6 @@ const scrollArea = /* @__PURE__ */ definePrimitive({
       live: scrollAttrs,
       bind: (el, { api }) => api.internal.bindRoot(el),
     }),
-    // The native scroller. Its own scrollbars hide once custom ones are on the page; on the server, custom ones are assumed.
     viewport: slot({
       state: areaState,
       attrs: (state) => ({
@@ -184,7 +183,6 @@ const scrollArea = /* @__PURE__ */ definePrimitive({
       live: scrollAttrs,
       bind: (el, { api }) => api.internal.bindViewport(el),
     }),
-    // Wider than the viewport only with a horizontal scrollbar, so text truncates as usual otherwise.
     content: slot({
       state: areaState,
       attrs: (state) => ({
@@ -196,7 +194,7 @@ const scrollArea = /* @__PURE__ */ definePrimitive({
       }),
       live: scrollAttrs,
     }),
-    // Hidden from assistive technology: the viewport scrolls natively, which screen readers already use.
+    // Spec: hidden from assistive technology; the viewport scrolls natively, which screen readers already use.
     scrollbar: slot<{ orientation?: Orientation }, ScrollAreaScrollbarState>({
       props: { orientation: "string" },
       state: (state, { props }) => {
@@ -244,13 +242,11 @@ const scrollArea = /* @__PURE__ */ definePrimitive({
           "data-scrolling": flag(axis === "x" ? state.scrollingX : state.scrollingY),
           "data-hovering": flag(state.hovering),
           "data-dragging": flag(state.dragging === axis),
-          // A hidden scrollbar must not catch presses meant for the content under it.
           style: visible ? undefined : "pointer-events:none",
         }
       }),
       bind: (el, part) => part.api.internal.bindScrollbar(el, axisOf(part.props.orientation)),
     }),
-    // Sized and moved by the CSS variables its scrollbar holds.
     thumb: slot<{ orientation?: Orientation }, ScrollAreaThumbState>({
       props: { orientation: { kind: "string", from: "scrollbar" } },
       state: (state, { props }) => ({
@@ -282,7 +278,6 @@ const scrollArea = /* @__PURE__ */ definePrimitive({
       })),
       bind: (el, part) => part.api.internal.bindThumb(el, axisOf(part.props.orientation)),
     }),
-    // Where the two scrollbars meet, there only while both show.
     corner: slot({
       attrs: (state) => ({
         "aria-hidden": "true",
@@ -297,7 +292,6 @@ const scrollArea = /* @__PURE__ */ definePrimitive({
         }),
       }),
     }),
-    // Scrolls to the end, like "Jump to latest" in a chat. Inert while it shouldn't show, so it fades out without focus.
     "scroll-to-end": slot({
       state: (state) => ({ visible: endButtonShown(state) }),
       attrs: () => ({ type: "button" }),

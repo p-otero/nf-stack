@@ -59,7 +59,6 @@ interface AttemptView {
   sourceThread?: ThreadRef
   /** One line: why this model, or why delegate. */
   reason?: string
-  /** Id of the attempt this one repairs. */
   repairOf?: string
   thread?: ThreadRef
   /** ISO 8601 UTC. */
@@ -108,7 +107,6 @@ interface TaskView {
   /** Chronological. */
   attempts: AttemptView[]
   activeAttemptId?: string
-  /** Pending question for a person. */
   decisionNeeded?: string
   /** Task total, including repairs and reviews. */
   usage?: UsageSummary

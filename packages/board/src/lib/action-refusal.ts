@@ -6,7 +6,7 @@ type ActionRefusalKind = "refused" | "unavailable"
 /** What `parseActionRefusal` reads back from a failed step: the action, why, and the sentence without its tag. */
 type ActionRefusal = { action: string; kind: ActionRefusalKind; text: string }
 
-// UI SDK's bridge (0.1.0-beta.12) keeps only `error.message` in a failed step, locally and over WebMCP, so the
+// Workaround: UI SDK's bridge (0.1.0-beta.12) keeps only `error.message` in a failed step, locally and over WebMCP, so the
 // identity travels as a tag at the end of the message, where the bridge's own prefix for a rejected promise can't
 // displace it.
 const refusalTag = /\s*\[(refused|unavailable):([^\]\s]+)\]\s*$/

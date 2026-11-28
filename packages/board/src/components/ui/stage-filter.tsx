@@ -29,8 +29,6 @@ type StageFilterProps = Omit<ComponentProps<typeof ToggleGroup<string>>, "childr
   locale?: string
 }
 
-// A filter is a set of pressed toggles: nothing pressed means no filter, so a toggle group fits, where a
-// segmented control would always hold one value.
 function StageFilter({
   stages,
   counts,

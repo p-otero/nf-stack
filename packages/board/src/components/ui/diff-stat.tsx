@@ -4,8 +4,7 @@ import { cn } from "@/lib/utils"
 
 const BLOCKS = 5
 
-/** How many of the five blocks are added and removed: one per line under five lines, else in proportion. */
-function blocks(additions: number, deletions: number) {
+function barBlocks(additions: number, deletions: number) {
   const total = additions + deletions
   if (total <= BLOCKS) return { added: additions, removed: deletions }
   let added = Math.round((additions / total) * BLOCKS)
@@ -14,10 +13,7 @@ function blocks(additions: number, deletions: number) {
   return { added, removed: BLOCKS - added }
 }
 
-/**
- * `+12 −3` and a five-block bar of the lines added and removed. Screen readers hear the counts in words
- * (`labels.counts`); the signs and the bar are hidden from them, and the numbers stay visible beside the bar.
- */
+/** Screen readers hear `labels.counts`; the signs and the bar are hidden from them. */
 function DiffStat({
   additions,
   deletions,
@@ -31,7 +27,7 @@ function DiffStat({
   bar?: boolean
   className?: string
 }) {
-  const { added, removed } = blocks(additions, deletions)
+  const { added, removed } = barBlocks(additions, deletions)
   return (
     <span
       data-slot="diff-stat"
@@ -80,9 +76,8 @@ function ModeLabel({ from, to, labels }: { from: string; to: string; labels: Dif
 }
 
 /**
- * What changed in a file, in the space its counts take: "Binary" for a binary file, the mode change for one that
- * only changed mode, nothing for a rename without changes, and otherwise the counts (and a mode change beside them).
- * `+0 −0` would read as "nothing changed" for a file that did change.
+ * "Binary" for a binary file, the mode change alone for a mode-only change, nothing for a rename without changes,
+ * otherwise the counts (and any mode change beside them); never `+0 −0`.
  */
 function FileChange({ diff, labels, bar = true }: { diff: FileDiff; labels: DiffLabels; bar?: boolean }) {
   const mode = modeChange(diff)

@@ -17,6 +17,6 @@
     "hooks": "@/hooks"
   },
   "registries": {
-    "@eskais": "https://raw.githubusercontent.com/p-otero/eskais-ui/refs/tags/v0.2.11/public/r/{name}.json"
+    "@eskais": "https://raw.githubusercontent.com/p-otero/eskais-ui/refs/tags/v0.2.19/public/r/{name}.json"
   }
 }

@@ -45,7 +45,7 @@ function SearchField({
   const input = controller ?? ownController
   return (
     <SearchFieldRoot input={input} onSearch={onSearch} aria-label={label} className={cn("w-full", className)}>
-      {/* UI SDK lists an input group as its own agent entry; naming it keeps every entry findable. */}
+      {/* Workaround: UI SDK lists an input group as its own agent entry; naming it keeps every entry findable. */}
       <InputGroup render={<fieldset />} aria-label={label}>
         <SearchIcon />
         <Input

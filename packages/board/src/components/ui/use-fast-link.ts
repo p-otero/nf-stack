@@ -20,9 +20,8 @@ const hashPrefixAttribute = "data-fast-link-hash-prefix"
 const defaultHashPrefix = "#/"
 const nestedControls = "button, input, label, select, summary, textarea, [role~='button' i]"
 
-// @fast-link/core 0.0.2 leaves every `#…` href native, hash routes (`#/inbox`) included, so these presses are
-// resolved here with core's eligibility rules. The anchors that own a controller, and the presses already taken,
-// are shared by every root, so a Link inside a FastLinkRegion follows once, by its own settings.
+// Workaround: @fast-link/core 0.0.2 leaves every `#…` href native, hash routes (`#/inbox`) included, so these
+// presses are resolved here with core's eligibility rules.
 const anchorRoots = new WeakMap<Element, number>()
 const handledPresses = new WeakSet<Event>()
 
@@ -38,7 +37,7 @@ function isHashRoute(anchor: Element, href: string) {
 
 type PressIntent = FastLinkIntent & { hashRoute: boolean }
 
-// Core follows only anchors without a role (or `link`), so an `anchorRole` root is resolved here, like hash routes.
+// Workaround: core follows only anchors without a role (or `link`), so an `anchorRole` root is resolved here.
 function pressIntent(event: PointerEvent, root: HTMLElement, anchorRole: string | undefined): PressIntent | null {
   if (event.defaultPrevented || event.button !== 0 || event.pointerType !== "mouse") return null
   if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey || handledPresses.has(event)) return null
@@ -57,15 +56,15 @@ function pressIntent(event: PointerEvent, root: HTMLElement, anchorRole: string 
   const url = new URL(href, anchor.ownerDocument.baseURI)
   const hashRoute = isHashRoute(anchor, href)
   if (hashRoute) {
-    // A `<base>` elsewhere makes `#/x` another document's URL, which the browser loads natively.
+    // Spec: a `<base>` elsewhere makes `#/x` another document's URL, which the browser loads natively.
     if (url.href.slice(0, url.href.length - url.hash.length) !== view.location.href.split("#")[0]) return null
   } else if (!ownRole || href.startsWith("#") || url.origin !== view.location.origin) return null
   handledPresses.add(event)
   return { anchor, href, url, hashRoute }
 }
 
-// Core reads `data-no-fast-link` only between the pressed element and its anchor. Checking the press here, in a
-// capture listener added before core's on the same root, lets an ancestor (a region, `<body>`) opt out too.
+// Workaround: core reads `data-no-fast-link` only between the pressed element and its anchor; a capture listener
+// added before core's lets an ancestor (a region, `<body>`) opt out too.
 function attachFastLink(root: HTMLElement, options: () => FastLinkOptions) {
   let press: PointerEvent | undefined
   let pendingPress: HTMLAnchorElement | undefined
@@ -88,7 +87,6 @@ function attachFastLink(root: HTMLElement, options: () => FastLinkOptions) {
     pendingPress = intent.anchor
     follow(intent, intent.hashRoute)
   }
-  // The click that ends the press would follow the link again (a router's onFollow, the link part's own click).
   const onClick = (event: MouseEvent) => {
     const anchor = pendingPress
     if (!anchor || event.detail === 0 || !(event.target instanceof Node) || !anchor.contains(event.target)) return

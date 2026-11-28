@@ -16,8 +16,8 @@ function layersBesideViewport(scroller: HTMLElement) {
   }
 }
 
-// UI SDK's virtualizer connects to a scrolling element; a list that scrolls with the page goes through this stand-in
-// for the window. It has no ResizeObserver of its own: its caller follows the window's resize instead.
+// Spec: UI SDK's virtualizer connects to a scrolling element; a list that scrolls with the page goes through this
+// stand-in for the window, and its caller follows the window's resize.
 function windowScroller(view: Window) {
   const scroller = {
     get scrollTop() {
@@ -39,7 +39,6 @@ function windowScroller(view: Window) {
       return view.innerWidth
     },
     scrollTo: (options: ScrollToOptions) => view.scrollTo(options),
-    // The findable layers go in the page's body, positioned against the viewport.
     clientTop: 0,
     clientLeft: 0,
     getBoundingClientRect: () => new DOMRect(0, 0, view.innerWidth, view.innerHeight),
@@ -48,14 +47,13 @@ function windowScroller(view: Window) {
     addEventListener: (type: string, listener: EventListener, options?: AddEventListenerOptions) =>
       view.addEventListener(type, listener, options),
     removeEventListener: (type: string, listener: EventListener) => view.removeEventListener(type, listener),
-    // No defaultView, so the virtualizer adds no ResizeObserver to the stand-in; its caller follows the window.
     ownerDocument: {
       defaultView: {},
       createElement: (tag: string) => view.document.createElement(tag),
       createTextNode: (text: string) => view.document.createTextNode(text),
     },
   }
-  // A stand-in with only the members UI SDK's virtualizer reads from its scrolling element, which it types as an
+  // Workaround: a stand-in with only the members UI SDK's virtualizer reads from its scrolling element, which it types as an
   // HTMLElement.
   return assumeType<HTMLElement>(scroller)
 }

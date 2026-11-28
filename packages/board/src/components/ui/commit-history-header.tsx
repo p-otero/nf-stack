@@ -24,7 +24,6 @@ type CommitHistoryHeaderProps = {
   actions?: ReactNode
   /** Content before the branch, like a repository picker. */
   start?: ReactNode
-  /** Commits counted in the header. */
   total: number
   /** Commits the upstream doesn't have yet. */
   unpushed?: number
@@ -33,7 +32,6 @@ type CommitHistoryHeaderProps = {
 const switcherClassName =
   "-ms-(--item-padding-x) w-auto border-transparent bg-transparent px-(--item-padding-x) font-medium shadow-none hover:bg-accent"
 
-/** The history's header: the branch (a switcher or a select in the branches view), the caller's actions and the count. */
 function CommitHistoryHeader({
   labels,
   now,

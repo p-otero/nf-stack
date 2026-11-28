@@ -11,15 +11,15 @@ import type { ComponentProps } from "react"
 import { ControlTooltip, type ControlTooltipOption } from "@/components/ui/tooltip"
 import { cnState } from "@/lib/utils"
 
-// Pressed is a full primary fill: a muted tint against the page doesn't reach the 3:1 a state needs.
+// Spec: pressed is a full primary fill: a muted tint against the page doesn't reach the 3:1 a state needs.
 const toggleVariants = cva(
   "touch-target inline-flex shrink-0 cursor-pointer items-center justify-center gap-inline rounded-control text-sm font-medium whitespace-nowrap transition-colors outline-none select-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background data-disabled:cursor-not-allowed data-disabled:opacity-50 data-pressed:bg-primary data-pressed:text-primary-foreground data-pressed:hover:bg-primary/90 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0",
   {
     variants: {
       variant: {
-        default: "hover:bg-accent hover:text-accent-foreground",
+        default: "hover:bg-accent hover:text-accent-foreground hover:glass-control data-pressed:glass-control",
         outline:
-          "border border-input bg-background/(--glass-opacity) hover:bg-accent hover:text-accent-foreground data-pressed:border-primary",
+          "border border-control-edge bg-background/(--glass-opacity) glass-control hover:bg-accent hover:text-accent-foreground data-pressed:border-primary",
       },
       size: {
         sm: "h-control-sm px-control-x",

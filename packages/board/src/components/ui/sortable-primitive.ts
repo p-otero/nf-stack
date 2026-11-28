@@ -66,7 +66,6 @@ function reasonOf(options: unknown): { reason: SortableReason; event?: Event } {
 
 const textOf = (el: HTMLElement | undefined) => el?.textContent?.replaceAll(/\s+/g, " ").trim() || undefined
 
-// What the parts render, copied from the options so attributes read only state, on the server too.
 function shown(options: SortableOptions) {
   return {
     handle: options.handle ?? false,
