@@ -37,6 +37,7 @@ function SelectedCommit({
   repo,
   sha,
   timeZone,
+  className,
   onOpenFull,
 }: {
   base: string;
@@ -44,6 +45,7 @@ function SelectedCommit({
   repo: string;
   sha: string;
   timeZone?: string;
+  className: string;
   onOpenFull: () => void;
 }) {
   const query = useQuery({
@@ -62,19 +64,26 @@ function SelectedCommit({
       />
     );
   }
-  return <CommitPane detail={query.data} timeZone={timeZone} onOpenFull={onOpenFull} />;
+  return (
+    <CommitPane
+      detail={query.data}
+      timeZone={timeZone}
+      onOpenFull={onOpenFull}
+      className={className}
+    />
+  );
 }
 
 function WorktreeChangesPane({
   worktree,
   error,
   onRetry,
-  fill,
+  className,
 }: {
   worktree: Writable<GitWorktree> | undefined;
   error: unknown;
   onRetry: () => void;
-  fill: boolean;
+  className: string;
 }) {
   if (error !== null) {
     return (
@@ -94,7 +103,7 @@ function WorktreeChangesPane({
       </p>
     );
   }
-  return <WorktreePane key={worktree.path} worktree={worktree} fill={fill} />;
+  return <WorktreePane key={worktree.path} worktree={worktree} className={className} />;
 }
 
 function GitWorktreeSelect({
@@ -255,13 +264,14 @@ function GitTab({
       ? reads.branches.names
       : undefined;
 
+  const paneClass = wide ? "min-h-0 flex-1" : "h-160";
   const pane =
     chosen === WORKING_TREE ? (
       <WorktreeChangesPane
         worktree={reads.changes.worktree}
         error={reads.changes.query.isError ? reads.changes.query.error : null}
         onRetry={() => void reads.changes.query.refetch()}
-        fill={wide}
+        className={paneClass}
       />
     ) : paneSha !== null && project !== null ? (
       <SelectedCommit
@@ -270,6 +280,7 @@ function GitTab({
         repo={repo.id}
         sha={paneSha}
         timeZone={timeZone}
+        className={paneClass}
         onOpenFull={() => openCommit(paneSha)}
       />
     ) : wide ? (

@@ -139,10 +139,9 @@ export type WorktreeCounts = {
   files: number;
 };
 
-const pathsOf = (files: readonly Writable<GitFileChange>[]): string[] =>
-  files.map((file) => file.path);
+const pathsOf = (files: readonly GitFileChange[]): string[] => files.map((file) => file.path);
 
-export const worktreeCounts = (worktree: Writable<GitWorktree>): WorktreeCounts => {
+export const worktreeCounts = (worktree: GitWorktree): WorktreeCounts => {
   const staged = new Set(pathsOf(worktree.staged.files));
   const untracked = new Set(pathsOf(worktree.untracked.files));
   const unstaged = new Set([...pathsOf(worktree.unstaged.files), ...untracked]);

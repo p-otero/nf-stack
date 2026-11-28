@@ -3,13 +3,14 @@ import { afterEach, describe, expect, mock, spyOn, test } from "bun:test";
 import type { GitBranchCommit, GitCommitDetail, GitWorktree, TaskBranch } from "@nf/contracts";
 import {
   branchHistoryHref,
+  commitViewHref,
   projectOfTask,
   readCommitDetail,
   readTaskBranch,
   readTaskWorktree,
-  toPatchSet,
   toWorktreeChanges,
 } from "../src/components/nf/task-git-data";
+import { toPatchSet } from "../src/components/nf/git/patch-set";
 import { uncommittedText } from "../src/components/nf/branch-badges";
 import { worktreeState } from "../src/components/nf/task-git-state";
 
@@ -49,6 +50,19 @@ describe("task git data", () => {
         name: "feat/nf-055-task-dialog",
       }),
     ).toBe("/board?project=NF&view=git&repo=nf-stack&branch=feat%2Fnf-055-task-dialog");
+  });
+
+  test("links a commit to the Git tab's full view of it, in the attempt's worktree", () => {
+    expect(
+      commitViewHref("http://127.0.0.1:4317/board?project=EK", {
+        task: "NF-055",
+        repo: "nf-stack",
+        name: "feat/nf-055-task-dialog",
+        worktree: "C:/work/nf-055",
+      }, "a1b2c3d4"),
+    ).toBe(
+      "/board?project=NF&view=git&repo=nf-stack&branch=feat%2Fnf-055-task-dialog&commit=a1b2c3d4&worktree=C%3A%2Fwork%2Fnf-055",
+    );
   });
 
   test("sums a change set's lines, leaving binary files out of the totals", () => {
@@ -166,10 +180,11 @@ describe("task git data", () => {
     expect(changes.unstaged.files).toBe(1);
     expect(changes.untracked).toEqual(["test/dispatch.test.ts"]);
     expect(changes.uncommitted).toBe(2);
-    expect(uncommittedText({ kind: "ready", changes })).toBe("2 uncommitted");
+    expect(uncommittedText({ kind: "ready", worktree: dirty, changes })).toBe("2 uncommitted");
     expect(
       uncommittedText({
         kind: "ready",
+        worktree: dirty,
         changes: toWorktreeChanges({ ...dirty, untrackedTruncated: true }),
       }),
     ).toBe("2+ uncommitted");

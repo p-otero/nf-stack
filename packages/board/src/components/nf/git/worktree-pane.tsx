@@ -1,23 +1,38 @@
 import type { GitWorktree } from "@nf/contracts";
-import type { Writable } from "@/contract";
-import { Badge } from "@/components/ui/badge";
-import { GitBranchChip } from "@/components/ui/git-chip";
-import { GitDiff, type GitDiffGroup } from "@/components/ui/git-diff";
+import { DiffPane } from "@/components/nf/git/diff-pane";
 import { shortWorktreePath, worktreeCounts } from "@/components/nf/git/git-model";
+import { truncationOf } from "@/components/nf/git/patch-set";
+import { GitBranchChip } from "@/components/ui/git-chip";
+import type { GitDiffGroup } from "@/components/ui/git-diff";
+import { cn } from "@/lib/utils";
 
-function WorktreePane({ worktree, fill }: { worktree: Writable<GitWorktree>; fill?: boolean }) {
-  const counts = worktreeCounts(worktree);
-  const groups: GitDiffGroup[] = [
+const worktreeGroups = (worktree: GitWorktree): GitDiffGroup[] =>
+  [
     { label: "Staged", patch: worktree.staged.patch },
     { label: "Unstaged", patch: worktree.unstaged.patch },
     { label: "Untracked", patch: worktree.untracked.patch },
   ].filter((group) => group.patch !== "");
-  const truncated =
-    worktree.staged.truncated || worktree.unstaged.truncated || worktree.untracked.truncated;
+
+const worktreeTruncations = (worktree: GitWorktree) => [
+  { what: "The staged diff", truncation: truncationOf(worktree.staged) },
+  { what: "The unstaged diff", truncation: truncationOf(worktree.unstaged) },
+  { what: "The untracked diff", truncation: truncationOf(worktree.untracked) },
+];
+
+function WorktreePane({
+  worktree,
+  className,
+}: {
+  worktree: GitWorktree;
+  /** The pane's box: it fills the height its parent gives it. */
+  className?: string;
+}) {
+  const counts = worktreeCounts(worktree);
+  const groups = worktreeGroups(worktree);
   return (
     <section
       aria-label="Uncommitted changes"
-      className="flex min-h-0 min-w-0 flex-1 flex-col gap-items"
+      className={cn("flex min-h-0 min-w-0 flex-col gap-items", className)}
     >
       <header className="flex flex-col gap-inline rounded-surface border bg-card px-inset-item py-inset-item">
         <div className="flex items-start gap-items">
@@ -49,7 +64,6 @@ function WorktreePane({ worktree, fill }: { worktree: Writable<GitWorktree>; fil
               ) : null}
             </span>
           </span>
-          {truncated ? <Badge tone="warning">patch truncated</Badge> : null}
         </div>
       </header>
       {groups.length === 0 ? (
@@ -57,18 +71,12 @@ function WorktreePane({ worktree, fill }: { worktree: Writable<GitWorktree>; fil
           Git returned no patch for these changes.
         </p>
       ) : (
-        <GitDiff
+        <DiffPane
           key={worktree.path}
-          aria-label="Uncommitted changes"
+          label="Uncommitted changes"
           groups={groups}
-          fileTree="collapsible"
-          height={fill === false ? "auto" : undefined}
-          /*
-           * Stacked under the history there is no bounded pane to fill, so `auto` grows the diff in
-           * the page; the same 40rem cap the diff's file tree uses keeps the page its own size and
-           * the diff scrolling inside it.
-           */
-          className={fill === false ? "[--diff-max-height:40rem]" : "min-h-0 flex-1"}
+          truncations={worktreeTruncations(worktree)}
+          className="min-h-0 flex-1"
         />
       )}
     </section>

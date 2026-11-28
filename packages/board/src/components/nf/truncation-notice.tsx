@@ -1,6 +1,6 @@
 import { TriangleAlertIcon } from "lucide-react";
 
-import type { Truncation } from "@/components/nf/task-git-data";
+import type { Truncation } from "@/components/nf/git/patch-set";
 
 const LISTED = 5;
 

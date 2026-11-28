@@ -10,9 +10,12 @@ const TIMERS = [
 
 // react-dom keeps the timers it finds when it is first imported, and bun shares that module across
 // test files, so it must keep the runtime's own: a happy-dom window's stop when it is unregistered.
-export const registerDom = (url: string): void => {
+export const registerDom = (
+  url: string,
+  size: { width: number; height: number } = { width: 1440, height: 1000 },
+): void => {
   const native = TIMERS.map((name) => [name, globalThis[name]] as const);
-  GlobalRegistrator.register({ url, width: 1440, height: 1000 });
+  GlobalRegistrator.register({ url, ...size });
   for (const [name, timer] of native) Object.assign(globalThis, { [name]: timer });
 };
 
